@@ -37,9 +37,9 @@ int test0(){
     Object * lambda=t->findsym("lambda");
     cout<<"======find labmda end."<<endl;
     lambda->tprint();
-
+    
     lambda->print();
-
+    
     {
         Object& a=o;
     }
@@ -106,7 +106,7 @@ int test2(){
     };
     for(int i=0;i<5;i++){
         o[i]=p.parse(test[i]);
-    
+        
         cout<<"["<<i<<"]"<<"<<<<<<===============#################################  "<<test[i]<<endl;
         Object *ret=o[i]->eval(o[i],env);
         
@@ -119,11 +119,11 @@ int test2(){
 int main(int argc, const char * argv[])
 {
     //test1();
-//    Object *o=p.parse("((A) B C)");
-//    o->dprint();
-//    o->car()->dprint();
-//    o->cdr()->car()->dprint();
-//    o->cdr()->cdr()->dprint();
+    //    Object *o=p.parse("((A) B C)");
+    //    o->dprint();
+    //    o->car()->dprint();
+    //    o->cdr()->car()->dprint();
+    //    o->cdr()->cdr()->dprint();
     Object::init();
     Parser p;
     Object *env;
@@ -147,39 +147,62 @@ int main(int argc, const char * argv[])
     char *test_lt="(< 10 2 )";
     
     
-//    Object *o1=p.parse(test_primop);
-//    cout<<"input=";o1->dprint();
-//    Object *ret=o1->eval(o1,env);
-//    cout<<"result=";ret->dprint();
-////
-////    Object::topEnv->dprint();
-//    Object *o2=p.parse(test_if);
-//    Object *ret1=o1->eval(o2,env);
-//    cout<<"result1=";ret1->dprint();
+    //    Object *o1=p.parse(test_primop);
+    //    cout<<"input=";o1->dprint();
+    //    Object *ret=o1->eval(o1,env);
+    //    cout<<"result=";ret->dprint();
+    ////
+    ////    Object::topEnv->dprint();
+    //    Object *o2=p.parse(test_if);
+    //    Object *ret1=o1->eval(o2,env);
+    //    cout<<"result1=";ret1->dprint();
     
-//
-//    Object::topEnv->dprint();
-//    Object *o3=p.parse(test_mix);
-//    Object *ret2=o1->eval(o3,env);
-//    cout<<"result2=";ret2->dprint();
-//    
-//    test1();
-//    test2();
+    //
+    //    Object::topEnv->dprint();
+    //    Object *o3=p.parse(test_mix);
+    //    Object *ret2=o1->eval(o3,env);
+    //    cout<<"result2=";ret2->dprint();
+    //
+    //    test1();
+    //    test2();
     
-    
+    //    Object *o1=p.parse(test_primop);
+    //    cout<<"input=";o1->dprint();
+    //    Object *ret=o1->eval(o1,env);
+    //    cout<<"result=";ret->dprint();
+    //    delete o1;
+    //    delete ret;
+    //    return 0;
     
     if(argc>1){
         if(argc==2){
-             string line;
-//            ofstream ostrm;
-//            ostrm.open("f1.dat");
-//            ostrm<<120<<endl;
-//            ostrm<<310.85<<endl;
-//            ostrm.close();
+            //cout<<argv[1]<<endl;
+            string arg1(argv[1]);
+            if(arg1=="--help"||arg1=="-h"){
+                cout<<""
+                
+                <<"Lisp++"<<endl
+                <<"    Created by evil on 9/7/14."<<endl
+                <<"    Copyright (c) 2014 evilbinary.org. All rights reserved."<<endl
+                <<"    rootntsd@gmail.com"<<endl;
+                cout<<"Help info:"<<endl;
+                cout<<"  "<<argv[0]<<" (direct to run interactive mode.)"<<endl;;
+                cout<<"  "<<argv[0]<<" [file] (run lisp with file.)"<<endl;;
+                
+                return 0;
+            }
+            string line;
+            //            ofstream ostrm;
+            //            ostrm.open("f1.dat");
+            //            ostrm<<120<<endl;
+            //            ostrm<<310.85<<endl;
+            //            ostrm.close();
             ifstream istrm(argv[1]);
-            Object *o;
-            Object *ret;
+            
+            
             while(true){
+                Object *o;
+                Object *ret;
                 o=p.parse(istrm);
                 if(istrm.peek()==EOF){
                     break;
@@ -187,9 +210,11 @@ int main(int argc, const char * argv[])
                 //cout<<o<<endl;
                 ret=o->eval(o,env);
                 cout<<ret<<endl;
+                
+                delete ret;
             }
             istrm.close();
-           
+            
         }else{
             
         }
@@ -212,6 +237,9 @@ int main(int argc, const char * argv[])
                     //cout<<"input=";o->dprint();
                     Object *ret=o->eval(o,env);
                     std::cout << ret<<endl << ">";
+                    //delete o;
+                    delete ret;
+                    
                     line="";
                 }
             }

@@ -96,13 +96,14 @@ Object::Object(OType type,int count,...){
 }
 Object::~Object(){
     if(this->data!=NULL){
-        free(this->data);
+        free(data);
         this->data=NULL;
     }
     if(this->obj!=NULL) {
-        delete [] obj;
         this->obj=NULL;
+        
     }
+   
 }
 
 
@@ -409,7 +410,7 @@ size_t Object::intval(Object *obj){
     }
 }
 Object *Object::mkint(size_t val){
-    size_t *p=(size_t*)malloc(sizeof(size_t));
+    size_t *p=(size_t*) malloc(sizeof(size_t));
     *p=val;
     Object *o=new Object(INT,p);
     return o;
