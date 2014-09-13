@@ -25,6 +25,7 @@ public:
     
     Object* parse(istream & inputs);
     Object* parse(char * inputs);
+    Object* parse(string inputs);
     Object *pair(istream &in);
     
 private:

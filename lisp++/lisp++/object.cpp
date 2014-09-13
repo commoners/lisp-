@@ -62,8 +62,10 @@ Object::Object(){
 //    this->obj[1]=nil;
 }
 Object::Object(char *name){
+    size_t len=strlen(name);len++;
     this->type=SYM;
-    this->data=malloc(strlen(name));
+    this->data=malloc(len);
+    memset(this->data,'\0',len);
     strcpy((char*)this->data,(const char*)name);
     this->obj=NULL;
 //    this->obj = (Object**) new Object[2]();
@@ -157,7 +159,7 @@ void Object::init(){
     symSetb=inter("set!");
     symLambda=inter("lambda");
     symBegin=inter("begin");
-    cout<<"topEnv:";topEnv->dprint();
+//    cout<<"topEnv:";topEnv->dprint();
 }
 //for expression  symbol and make callable function
 Object* Object::eval(Object *exp,Object *env){
@@ -423,9 +425,11 @@ Object * Object::mkproc(Object *args,Object *body,Object* env){
 Object * Object::mkproc(char* name,Object *args,Object *body,Object* env){
     //cout<<"############"<<name<<endl;
     Object *o=new Object(PROC,3,args,body,env);
-    o->data=malloc(strlen(name)+1);
-    memset(o->data,0,strlen(name)+1);
+    size_t len=strlen(name);len++;
+    o->data=malloc(len);
+    memset(o->data,'\0',len);
     strcpy((char*)o->data,(const char*)name);
+    
     return o;
 }
 
@@ -513,6 +517,52 @@ char*  Object::symname(Object *obj){
 istream& operator>>(istream &cin,Object &obj){
     return cin;
 }
+ostream& operator<<(ostream &cout,Object* obj){
+
+    if(obj==NULL){
+        cout<<"NULL";
+        return cout;
+    }
+    if(obj->type==SYM){
+        if((obj->isnil())){
+            cout<<"nil";
+            return cout;
+        }
+        if(obj->data!=NULL)
+            cout<<(obj->symname());
+    }else if(obj->type==INT){
+        cout<<*(int*)obj->data;
+    }else if(obj->type==CONS){
+        cout<<"(";
+        while(true) {
+            cout<<(obj->car());
+            if((obj->cdr()->isnil())){
+                cout<<")";
+                break;
+            }else{
+                cout<<" ";
+            }
+            obj=(obj->cdr());
+            if(obj->type!=CONS){
+                cout<<" . ";
+                cout<<obj;
+                cout<<")";
+                break;
+            }
+        }
+        //cout<<")";
+     
+    }else if(obj->type==PROC){
+        cout<<"#<PROC "<<obj->data<<">";
+        
+    }else if(obj->type==PRIMOP){
+         cout<<"#<PRIMOP "<<obj->data<<">";
+    }else {
+        cout<<"UNDEFINE";
+    }
+    return cout;
+}
+
 ostream& operator<<(ostream &cout,Object&obj){
     if(&obj==NULL){
         cout<<"NULL";
@@ -620,8 +670,7 @@ void Object::dprint(Object *o){
         else
             cout<<"data nil";
     }else if(o->type==PRIMOP||o->type==PROC){
-        int *p=(int*)o->data;
-        cout<<"#<PROC "<<p<<">";
+        cout<<"#<PROC "<<o->data<<">";
     }else if(o->type==PROC){
         cout<<"#<PROC "<<(char*)o->data<<">";
     }else if(o==nil){

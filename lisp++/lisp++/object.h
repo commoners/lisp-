@@ -127,7 +127,7 @@ public:
     
     friend istream& operator>>(istream &cin,Object &obj);
     friend ostream& operator<<(ostream &cout,Object&obj);
-    
+    friend ostream& operator<<(ostream &cout,Object* obj);
 
 private:
     //data

@@ -25,6 +25,12 @@ Object* Parser::parse(char * inputs){
     //cout<<"inputs:"<<inputs<<endl;
     return parse(isp);
 }
+Object* Parser::parse(string inputs){
+    istringstream iss(inputs);
+    istream & isp=iss;
+    //cout<<"inputs:"<<inputs<<endl;
+    return parse(isp);
+}
 
 Object* Parser::parse(istream & in){
     Object *o=Object::nil;
@@ -151,11 +157,11 @@ Object *Parser::pair(istream &in){
 void Parser::eatws(istream &in){
     int c;
     while ((c = in.get())!=EOF) {
-        if (isspace(c)) {
+        if (isspace(c)||c=='\n') {
             //cout<<"isspace"<<endl;
             continue;
         }else if (c == ';') {//;注释忽略
-            cout<<"conmmon"<<endl;
+            //cout<<"conmmon"<<endl;
             while (((c = in.get())) != EOF &&(c !='\n'));
             continue;
         }

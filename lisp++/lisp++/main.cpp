@@ -11,6 +11,7 @@
 #include <string>
 #include "parser.h"
 #include <sstream>
+#include <iomanip>
 
 #define FAILE cout<<"[FAILED] "<<__FUNCTION__<<" "<<__FILE__<<" "<<__LINE__<<endl;
 #define PASS cout<<"[PASS] "<<__FUNCTION__<<" "<<__FILE__<<" "<<__LINE__<<endl;
@@ -146,25 +147,80 @@ int main(int argc, const char * argv[])
     char *test_lt="(< 10 2 )";
     
     
-//    Object *o1=p.parse(test_lt);
+//    Object *o1=p.parse(test_primop);
 //    cout<<"input=";o1->dprint();
 //    Object *ret=o1->eval(o1,env);
 //    cout<<"result=";ret->dprint();
-//
-//    Object::topEnv->dprint();
-//    Object *o2=p.parse(test_setb);
+////
+////    Object::topEnv->dprint();
+//    Object *o2=p.parse(test_if);
 //    Object *ret1=o1->eval(o2,env);
 //    cout<<"result1=";ret1->dprint();
-//    
-//    
+    
+//
 //    Object::topEnv->dprint();
 //    Object *o3=p.parse(test_mix);
 //    Object *ret2=o1->eval(o3,env);
 //    cout<<"result2=";ret2->dprint();
 //    
-    test1();
+//    test1();
 //    test2();
     
+    
+    
+    if(argc>1){
+        if(argc==2){
+             string line;
+//            ofstream ostrm;
+//            ostrm.open("f1.dat");
+//            ostrm<<120<<endl;
+//            ostrm<<310.85<<endl;
+//            ostrm.close();
+            ifstream istrm(argv[1]);
+            Object *o;
+            Object *ret;
+            while(true){
+                o=p.parse(istrm);
+                if(istrm.peek()==EOF){
+                    break;
+                }
+                //cout<<o<<endl;
+                ret=o->eval(o,env);
+                cout<<ret<<endl;
+            }
+            istrm.close();
+           
+        }else{
+            
+        }
+        return 0;
+    }else{
+        cout<<">";
+        char ch;
+        string line;
+        while (true)
+        {
+            try
+            {
+                char ch;
+                //std::getline(std::cin, line);
+                while( (ch=cin.get())!=EOF&&ch!='\n'){
+                    line+=ch;
+                }
+                if(line!=""){
+                    Object *o=p.parse(line.c_str());
+                    //cout<<"input=";o->dprint();
+                    Object *ret=o->eval(o,env);
+                    std::cout << ret<<endl << ">";
+                    line="";
+                }
+            }
+            catch (std::exception &e)
+            {
+                std::cout << e.what() << std::endl;
+            }
+        }
+    }
     
     return 0;
 }
