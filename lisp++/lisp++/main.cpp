@@ -98,7 +98,7 @@ int test2(){
     Object *o[5]={NULL};
     char *test[]={
         "(define count 0)",
-        "(define jj (lambda () (if (< count 1000) (begin (set! count (+ count 1)) (jj)) count)))",
+        "(define jj (lambda () (if (< count 10) (begin (set! count (+ count 1)) (jj)) count)))",
         "(jj)",
         "(define count 0)",
         "(jj)",
@@ -162,8 +162,8 @@ int main(int argc, const char * argv[])
 //    Object *ret2=o1->eval(o3,env);
 //    cout<<"result2=";ret2->dprint();
 //    
-    
-    test2();
+    test1();
+//    test2();
     
     
     return 0;
