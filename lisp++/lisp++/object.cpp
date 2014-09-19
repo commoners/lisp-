@@ -227,8 +227,11 @@ Object* Object::eval(Object *exp,Object *env){
 //                    cout<<" cdadr(exp):";cdadr(exp)->dprint();
                     //cout<<vars<<endl;
                     //cout<<*vars<<endl;
-                    Object *proc=mkproc(car(exp)->symname(), cdadr(exp),vals,env);
+                    Object *proc;
+                    //env=extend(vars,proc,env);
+                    proc=mkproc(car(exp)->symname(), cdadr(exp),vals,env);
                     topEnv=extend(vars,proc,topEnv);
+                    //cout<<proc<<endl;
                     return proc;
                 }
                 
@@ -285,6 +288,7 @@ Object* Object::eval(Object *exp,Object *env){
             }else if(exp->car()->type==SYM){
 //                cout<<"    SYM"<<endl;
                 return apply(eval(car(exp),env),cdr(exp),env);
+                
                 //return eval(cons(eval(car(exp),env),cdr(exp)),env);
             }else if(exp->car()->type==PROC){
 //                cout<<"    PROC"<<endl;
@@ -322,6 +326,7 @@ Object * Object::apply(Object *proc,Object *args,Object *env){
         return ((FUNCTION)(fn->data))(vals);
     }else if(proc->type==PROC){
 //        cout<<"+++++++++PROC"<<endl;
+        //cout<<proc<<endl;
         Object* e=extend(car(proc),vals,proc->obj[2]);
 //        car(proc)->dprint();
 //        vals->dprint();
@@ -742,7 +747,7 @@ Object *Object::sum(Object *args){
 Object *Object::sub(Object *args){
     size_t sub=0;
 //    cout<<"   sub args:";args->dprint();
-    for(sub=intval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
+    for(sub-=intval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
 //        cout<<"    car(args):";car(args)->dprint();
         sub-=intval(car(args));
     }

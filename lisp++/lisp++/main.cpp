@@ -146,11 +146,19 @@ int main(int argc, const char * argv[])
     char *test_gt="(> 10 2)";
     char *test_lt="(< 10 2 )";
     
+//    char test_define_add[]="(define (add exp) (+ exp))";
+//    char test_call_define[]="(add 2)";
+//    
+//        Object *o1=p.parse(test_define_add);
+//        cout<<"input=";o1->dprint();
+//        Object *ret=o1->eval(o1,env);
+//        cout<<"result=";ret->dprint();
+//    
+//    
+//    Object *o2=p.parse(test_call_define);
+//    Object *ret1=o2->eval(o2,env);
+//    cout<<"result=";ret1->dprint();
     
-    //    Object *o1=p.parse(test_primop);
-    //    cout<<"input=";o1->dprint();
-    //    Object *ret=o1->eval(o1,env);
-    //    cout<<"result=";ret->dprint();
     ////
     ////    Object::topEnv->dprint();
     //    Object *o2=p.parse(test_if);
@@ -172,7 +180,8 @@ int main(int argc, const char * argv[])
     //    cout<<"result=";ret->dprint();
     //    delete o1;
     //    delete ret;
-    //    return 0;
+    
+        //return 0;
     
     if(argc>1){
         if(argc==2){
@@ -211,7 +220,7 @@ int main(int argc, const char * argv[])
                 ret=o->eval(o,env);
                 cout<<ret<<endl;
                 
-                delete ret;
+                //delete ret;
             }
             istrm.close();
             
@@ -237,7 +246,7 @@ int main(int argc, const char * argv[])
                     //cout<<"input=";o->dprint();
                     Object *ret=o->eval(o,env);
                     std::cout << ret<<endl << ">";
-                    delete ret;
+                    //delete ret;
                     
                     line="";
                 }
