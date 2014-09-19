@@ -237,7 +237,6 @@ int main(int argc, const char * argv[])
                     //cout<<"input=";o->dprint();
                     Object *ret=o->eval(o,env);
                     std::cout << ret<<endl << ">";
-                    //delete o;
                     delete ret;
                     
                     line="";

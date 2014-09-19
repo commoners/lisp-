@@ -57,6 +57,7 @@ Object::Object(){
     this->type=CONS;
     this->data=NULL;
     this->obj=NULL;
+    isalive=true;
     //this->obj = (Object**) malloc(sizeof(Object*)+1);
 //    this->obj[0]=nil;
 //    this->obj[1]=nil;
@@ -68,6 +69,7 @@ Object::Object(char *name){
     memset(this->data,'\0',len);
     strcpy((char*)this->data,(const char*)name);
     this->obj=NULL;
+    isalive=true;
 //    this->obj = (Object**) new Object[2]();
 //    this->obj[0]=nil;
 //    this->obj[1]=nil;
@@ -76,6 +78,7 @@ Object::Object(OType type,void* data){
     this->type=type;
     this->data=data;
     this->obj=NULL;
+    isalive=true;
 //    this->obj = (Object**) new Object[2]();
 //    this->obj[0]=nil;
 //    this->obj[1]=nil;
@@ -87,6 +90,7 @@ Object::Object(OType type,int count,...){
     va_start(ap, count);
     this->obj = (Object**) new Object[count]();
     this->type = type;
+    isalive=true;
     for(i = 0; i < count; i++){
         obj[i] =(Object *)va_arg(ap,Object*);
         //cout<<"obj["<<i<<"]="<<*(obj[i])<<endl;
@@ -95,14 +99,23 @@ Object::Object(OType type,int count,...){
     
 }
 Object::~Object(){
-    if(this->data!=NULL){
-        free(data);
-        this->data=NULL;
+//    int *p=(int*)this;
+//    cout<<"~Object "<<p<<" isalive:"<<isalive<<endl<<endl;
+//    cout<<this<<endl;
+    if(isalive){
+        //cout<<" release"<<endl;
+        isalive=false;
+        if(this->data!=NULL){
+            free(data);
+            this->data=NULL;
+        }
+        if(this->obj!=NULL) {
+            this->obj=NULL;
+        }
+    }else{
+        //cout<<" do nothing."<<endl;
     }
-    if(this->obj!=NULL) {
-        this->obj=NULL;
-        
-    }
+    
    
 }
 
@@ -212,8 +225,11 @@ Object* Object::eval(Object *exp,Object *env){
 //                    vars->dprint();
 //                    vals->dprint();
 //                    cout<<" cdadr(exp):";cdadr(exp)->dprint();
+                    //cout<<vars<<endl;
+                    //cout<<*vars<<endl;
                     Object *proc=mkproc(car(exp)->symname(), cdadr(exp),vals,env);
                     topEnv=extend(vars,proc,topEnv);
+                    return proc;
                 }
                 
             }else if(ex==symLambda){

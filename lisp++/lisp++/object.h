@@ -134,6 +134,7 @@ private:
     OType type;
     void *data;
     Object **obj;
+    bool isalive;
     
 };
 
