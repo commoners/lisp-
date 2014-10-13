@@ -1,0 +1,6 @@
+(define x '(a b c d e f))
+(cdr x)
+(define x '(g g g))
+(set! x '(a b c d e f))
+(define x '(((a b c d e f))))
+(cdr x)

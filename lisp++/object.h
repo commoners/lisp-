@@ -14,6 +14,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <memory>
 
 using namespace std;
 #define DEBUG_INFO cout<<"["<<__FILE__<<" "<<__FUNCTION__<<" "<<__LINE__<<"]" <<endl;
@@ -36,6 +37,16 @@ typedef enum ObjectType{
 class Object{
 
 public:
+    static Object * eval_tail_call(Object *exp,Object *env);
+//    static std::auto_ptr < IAnswer<Object*> >  eval2(Object *exp,Object *evn);
+//    static std::auto_ptr < IAnswer<Object*> > evlis2(Object *exps,Object *env);
+//    static std::auto_ptr < IAnswer<Object*> > apply2(Object *prog,Object *args,Object *env);
+//    
+
+    static Object * eval2(Object *exp,Object *evn);
+    static Object * evlis2(Object *exps,Object *env);
+    static Object * apply2(Object *prog,Object *args,Object *env);
+    
     static Object * eval(Object *exp,Object *evn);
     static Object * evlis(Object *exps,Object *env);
     static Object * apply(Object *prog,Object *args,Object *env);
@@ -64,8 +75,12 @@ public:
     static Object *tee;
     static Object *fee;
     static Object *symBegin;
+    static Object *none;
     
     static Object *globalEnv;
+    static Object *callExp;
+    static Object *callEnv;
+
     
     
     
@@ -80,6 +95,7 @@ public:
     static Object *cons(Object* obj1,Object *obj2);
     static Object *mksym(char *name);
     static char*  symname(Object *obj);
+ 
     static Object* mkobj(OType type,int count,...);
     static Object * mkpriop(FUNCTION fun);
     static Object * mkproc(Object *args,Object *body,Object* env);
@@ -123,7 +139,7 @@ public:
 //    Object *caar();
 //    Object *cdar();
     char*  symname();
-
+ 
     
     friend istream& operator>>(istream &cin,Object &obj);
     friend ostream& operator<<(ostream &cout,Object&obj);
