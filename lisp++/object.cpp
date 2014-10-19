@@ -89,7 +89,7 @@ Object::Object(){
     this->obj=NULL;
     isalive=true;
     this->flag=INIT;
-//    cout<<__FUNCTION__<<" "<<(int *)this<<endl;
+    //cout<<__FUNCTION__<<" "<<(int *)this<<endl;
     memory->add_obj(this);
 }
 Object* Object::mkobj(char* name){
@@ -319,170 +319,6 @@ void Object::init(){
     
     //    cout<<"topEnv:";topEnv->dprint();
 }
-//for expression  symbol and make callable function
-Object* Object::eval(Object *exp,Object *env){
-    if(exp==nil) return nil;
-    switch (exp->type) {
-        case INT:
-            return exp;
-        case SYM:{
-            //            cout<<"-SYM"<<endl;
-            Object *vals=lookup(exp, env);;
-            if(vals!=nil){
-                //                cout<<"  Found SYM "<<exp->symname()<<endl;
-                return vals;
-            }else{
-                vals=lookup(exp,topEnv);
-                if(vals!=nil){
-                    //                    cout<<"  Found G SYM "<<exp->symname()<<endl;
-                    return vals;
-                }else{
-                    //                    cout<<"  No found SYM "<<exp->symname()<<endl;
-                    
-                }
-                
-            }
-            return exp;
-            
-        }
-        case CONS:{
-            //            cout<<"exp:";exp->dprint();
-            //exp->tprint();
-            Object *ex=car(exp);
-            if(ex==symDefine){
-                Object * vals=cddr(exp);
-                Object * vars=cadr(exp);
-                if(cadr(exp)->type==SYM){
-                    vals=eval(car(cdr(cdr(exp))),env);
-                    //vals=car(cdr(cdr(exp)));
-                    //                    cout<<" FIRST DEFILE"<<endl;
-                    //                    cout<<" val=";
-                    //                    vals->dprint();
-                    // avals=eval(car(cdr(cdr(exp))),env);
-                    topEnv=extend(vars,vals,topEnv);
-                    //topEnv->dprint();
-                    //                    cout<<" define:";vals->dprint();
-                    return vals;
-                }else{
-                    vars=caadr(exp);
-                    //                    cout<<" mk--proc"<<endl;
-                    //                    vars->dprint();
-                    //                    vals->dprint();
-                    //                    cout<<" cdadr(exp):";cdadr(exp)->dprint();
-                    //cout<<vars<<endl;
-                    //cout<<*vars<<endl;
-                    Object *proc;
-                    //env=extend(vars,proc,env);
-                    proc=mkproc(car(exp)->symname(), cdadr(exp),vals,env);
-                    topEnv=extend(vars,proc,topEnv);
-                    //cout<<proc<<endl;
-                    return proc;
-                }
-                
-            }else if(ex==symLambda){
-                Object *proc=mkproc(car(exp)->symname(),cadr(exp),cddr(exp),topEnv);
-                topEnv=extend(caadr(exp),proc,topEnv);
-                //                cout<<" mkproc:";proc->dprint();
-                return proc;
-            }else if(ex==symQuote){
-                //                cout<<" quote:";exp->dprint();
-                //                cdr(exp)->dprint() ;
-                return cdr(exp);
-            }else if(ex==symIf){
-                if(eval(car(cdr(exp)), env) != nil)
-                    exp = car(cdr(cdr(exp)));
-                else
-                    exp = car(cdr(cdr(cdr(exp))));
-                return eval(exp,env);
-            }else if(ex==symSetb){
-                //                cout<<" =====setb"<<endl;
-                //                cout<<" ======env:";env->dprint();
-                //                cadr(exp)->dprint();
-                //                cout<<"cddr:";cddr(exp)->dprint();
-                //cout<<" ee:";eval(cddr(exp), env)->dprint();
-                Object *vals=update(cadr(exp),eval(cddr(exp), env),env);
-                //                cout<<" ======#env:";env->dprint();
-                if(vals==nil){
-                    //                    cout<<"No find, "<<*cadr(exp)<<endl;
-                }
-                return vals;
-            }else if(ex==symBegin){
-                Object *ret=nil;
-                for(exp=cdr(exp);exp!=nil;exp=cdr(exp)){
-                    //                    cout<<"============================";car(exp)->dprint();
-                    //                    cout<<"#############################env";env->dprint();
-                    ret=eval(car(exp),env);
-                    //                    cout<<"ret:";ret->dprint();
-                }
-                return ret;
-                
-            }
-            //            cout<<"  exp car:";ex->dprint();
-            //            cout<<"  exp cdr:";exp->cdr()->dprint();
-            
-            if(exp->car()->type==PRIMOP){
-                //                cout<<"    PRIMOP"<<endl;
-                return apply(eval(car(exp),env),cdr(exp),env);
-            }else if(exp->car()->type==CONS){
-                //                cout<<"    CONS"<<endl;
-                //                return exp;
-                //                return cons(eval(car(exp),env),eval(cdr(exp),env));
-                //                return eval(cons(eval(car(exp),env),eval(cdr(exp),env)),env);
-                return apply(eval(car(exp),env),cdr(exp),env);
-            }else if(exp->car()->type==SYM){
-                //                cout<<"    SYM"<<endl;
-                return apply(eval(car(exp),env),cdr(exp),env);
-                //                return eval(car(exp),env),cdr(exp);
-                //return eval(cons(eval(car(exp),env),cdr(exp)),env);
-            }else if(exp->car()->type==PROC){
-                //                cout<<"    PROC"<<endl;
-                return exp;
-            }else{
-                //                cout<<"    ELSE"<<endl;
-                //return cons(car(exp),eval(cdr(exp),env));
-                //return apply(eval(car(exp),env),cdr(exp),env);
-                //return cons(eval(car(exp),env),eval(cdr(exp),env));
-                return exp;
-            }
-        }case PROC:{
-            //            cout<<"PROC---";exp->dprint();
-        }case PRIMOP:{
-            
-        }default:{
-            break;
-        }
-    }
-    //    cout<<"ret exp:";exp->dprint();
-    return exp;
-}
-//call of the function with a given set of arguments (apply f (list x))
-Object * Object::apply(Object *proc,Object *args,Object *env){
-    //    cout<<endl;
-    if(proc==nil)
-        return nil;
-    //    cout<<"proc:";proc->print();
-    Object *vals=evlis(args, env);
-    //     cout<<"  eval vals:";vals->dprint();
-    Object *fn=eval(proc, env);;
-    //    cout<<"  eval fn:";fn->dprint();
-    if(proc->type==PRIMOP) {//内建函数
-        //        cout<<"+++++++++PRIMOP"<<endl;
-        return ((FUNCTION)(fn->data))(vals);
-    }else if(proc->type==PROC){
-        //        cout<<"+++++++++PROC"<<endl;
-        //cout<<proc<<endl;
-        Object* e=extend(car(proc),vals,proc->obj[2]);
-        //        car(proc)->dprint();
-        //        vals->dprint();
-        //        e->dprint();
-        return eval(cdr(proc),e);
-    }else{
-        //cout<<"no apply."<<endl;
-        return proc;
-    }
-    return nil;
-}
-
 
 
 //###############################################################################
@@ -890,7 +726,7 @@ Object *Object::expand_clauses(Object *clauses) {
 }
 
 
-Object * Object::eval3(Object *exp,Object *env){
+Object * Object::eval(Object *exp,Object *env){
     Object *procedure;
     Object *arguments;
     Object *result;
@@ -919,7 +755,11 @@ calltail:
         Object* symbol=lookup(exp, env);
         if(symbol==nil){
             symbol=lookup(exp,topEnv);
-            if(symbol==nil) symbol=exp;
+            if(symbol==nil){
+                cout<<"can't find symbol "<<exp<<endl;
+//                cout<<"exp->type:"<<exp->type<<endl;
+                symbol=nil;
+            }
         }
         return symbol;
     }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symQuote){
@@ -929,7 +769,7 @@ calltail:
         Object *set_var=cadr(exp);
         Object *set_val=caddr(exp);
 //        cout<<"     set_var:"<<set_var<<" set_val:"<<set_val<<endl;
-        set_val=set_val->eval3(set_val,env);
+        set_val=set_val->eval(set_val,env);
 //        cout<<"     =set_var:"<<set_var<<" =set_val:"<<set_val<<endl;
 
         Object *ret=update(set_var, set_val, env);
@@ -943,14 +783,14 @@ calltail:
         if(cadr(exp)->type==SYM){
             def_var=cadr(exp);
             def_val=caddr(exp);
-            def_val=def_val->eval3(def_val,env);
+            def_val=def_val->eval(def_val,env);
             Object *findret=lookup(def_var, topEnv);;
             if(findret==nil){
                 topEnv=extend(def_var,def_val,topEnv);
             }else{
                 update(def_var,def_val,topEnv);
             }
-            //cout<<"hhehe"<<def_var<<" val"<<def_val<<endl;
+            cout<<"hhehe"<<def_var<<" val"<<def_val<<endl;
         }else{
             def_var=caadr(exp);
             Object *params=cdadr(exp);
@@ -968,7 +808,7 @@ calltail:
         Object* if_test=cadr(exp);
         Object* if_consequent=caddr(exp);
         Object * if_alternate=cadddr(exp);
-        Object *test=if_test->eval3(if_test,env);
+        Object *test=if_test->eval(if_test,env);
 //        cout<<"     exp:"<<exp<<endl;
 //        cout<<"         if_test:"<<if_test<<"="<<test<<endl;
 //        cout<<"         if_consequent:"<<if_consequent<<endl;
@@ -992,11 +832,13 @@ calltail:
     }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symLambda){
         Object *lambda_parms=cadr(exp);
         Object *lambda_body=cddr(exp);
+        cout<<"p:"<<lambda_parms<<endl;
+        cout<<"b:"<<lambda_body<<endl;
         return mkproc(lambda_parms, lambda_body, env);
     }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symBegin){
         exp=cdr(exp);
         while(cdr(exp)!=nil){//is the last
-            exp->eval3(car(exp),env);
+            exp->eval(car(exp),env);
             exp= cdr(exp);
         }
         exp=car(exp);
@@ -1011,6 +853,11 @@ calltail:
 //            cout<<"             clauses="<<exp<<endl;
         }
         goto calltail;
+    }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symAtom){
+                //cout<<"============="<<cadr(exp)<<endl;
+        exp=cadr(exp);
+        exp=exp->eval(exp,env);
+        return exp->atom();
     }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symLet){
         
     }else if(exp->type==CONS){//proc to execute
@@ -1019,8 +866,11 @@ calltail:
         Object *ol=cdr(exp);
         
 //        cout<<"         op:"<<op<<" type:"<<op->type<<" ol:"<<ol<<endl;
-        procedure=op->eval3(op,env);
-        arguments=ol->evlis3(ol, env);
+        procedure=op->eval(op,env);
+        if(procedure==nil)//can't find procedure
+            return symStatus;
+        
+        arguments=ol->evlis(ol, env);
 //        cout<<"         =op:"<<op<<" type:"<<procedure->type<<" =ol:"<<arguments<<endl;
 //        cout<<"     app:"<<exp<<" ["<<op<<" "<<arguments<<"]"<<endl;
     
@@ -1048,7 +898,7 @@ calltail:
     return exp;
     
 }
-Object * Object::evlis3(Object *exps,Object *env){
+Object * Object::evlis(Object *exps,Object *env){
     if(exps == nil) return nil;
     //    cout<<"exps:"<<exps<<" env:"<<env<<endl;
 //       cout<<"     evlis3 exps:";exps->dprint(); cout<<"    env:"<<env<<endl;
@@ -1060,7 +910,7 @@ Object * Object::evlis3(Object *exps,Object *env){
     Object*l=nil;
     for(;exps->type==CONS;exps=cdr(exps)){
 //               cout<<" ****exps:"<<exps<<endl;
-        Object *te=exps->eval3(car(exps),env);
+        Object *te=exps->eval(car(exps),env);
 //        cout<<" ****vals:"<<te<<endl;
         t->setcar(te);
         t->setcdr(cons(nil,nil));
@@ -1073,8 +923,8 @@ Object * Object::evlis3(Object *exps,Object *env){
 //    cout<<"     ret:"<<r<<endl;
     return r;
 }
-Object * Object::apply3(Object *proc,Object *args,Object *env){
-    args=proc->evlis3(args,env);
+Object * Object::apply(Object *proc,Object *args,Object *env){
+    args=proc->evlis(args,env);
     return ((FUNCTION)(proc->data))(args);
 }
 
@@ -1206,14 +1056,6 @@ Object * Object::assoc(Object *x,Object *y){
 
 
 
-
-Object* Object::evlis(Object *exps,Object *env){
-    if(exps == nil) return nil;
-    return cons(eval(car(exps), env),
-                evlis(cdr(exps), env));
-}
-
-
 Object *Object::findsym(char* name){
     Object *symlist;
     //DEBUG_INFO;
@@ -1326,7 +1168,8 @@ Object *Object::execute(Object *env){
 
 
 Object *Object::atom(){
-    if(this->type==INT||this->type==SYM){
+    cout<<"type:"<<type<<endl;
+    if(this->type==INT||this->type==SYM||this->type==STRING){
         return tee;
     }
     return nil;

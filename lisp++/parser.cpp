@@ -145,6 +145,8 @@ Object *Parser::pair(istream &in){
     Object *car=NULL;
     Object *cdr=NULL;
     int c;
+    
+    
     eatws(in);
     c=in.get();
     if(c==')'){
@@ -173,6 +175,10 @@ Object *Parser::pair(istream &in){
         return Object::cons(car,cdr);
     }else {
         //cout<<"pair else "<<endl;
+        
+        if(in.eof())
+            return Object::nil;
+        
         in.unget();
         cdr = pair(in);
         //cout<<"=car:";

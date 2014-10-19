@@ -77,7 +77,7 @@ int test_eval(int number,char *test,char *result,int type){
     }else if(type==1){
         ret=obj->eval_tail_call(obj, env);
     }else if(type==3){
-        ret=obj->eval3(obj,env);
+        ret=obj->eval(obj,env);
     }
     stringstream os;
     ret->dstream(os);
@@ -259,7 +259,7 @@ int main(int argc, const char * argv[])
 {
     Object::init();
     Parser p;
-    Object *env;
+    Object *env=Object::nil;
     Object *o;
     FUN tests[]={test0,test1,test2,test3,test4,test5};
     
@@ -319,8 +319,8 @@ int main(int argc, const char * argv[])
                 Object *o;
                 Object *ret;
                 o=p.parse(istrm);
-                Memory::add_root(o);
-                Memory::add_root(env);
+                //Memory::add_root(o);
+                //Memory::add_root(env);
 
                 if(istrm.peek()==EOF){
                     break;
@@ -331,9 +331,9 @@ int main(int argc, const char * argv[])
                 if(argt==true){
                     //cout<<"artg=========="<<endl;
                     //ret=o->eval(o,env);
-                    ret=o->eval3(o,env);
-                }else{
                     ret=o->eval2(o,env);
+                }else{
+                    ret=o->eval(o,env);
                 }
                 if(arginfo){
                     cout<<"#result:";
@@ -374,9 +374,9 @@ int main(int argc, const char * argv[])
                         }
                         if(argt==true){
                             //cout<<"artg=========="<<endl;
-                            ret=o->eval(o,env);
-                        }else{
                             ret=o->eval2(o,env);
+                        }else{
+                            ret=o->eval(o,env);
                         }
                          if(arginfo){
                             cout<<"#result:";

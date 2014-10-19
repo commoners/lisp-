@@ -53,15 +53,10 @@ public:
      Object * apply2(Object *prog,Object *args,Object *env);
 
     
-    Object * eval3(Object *exp,Object *evn);
-    Object * evlis3(Object *exps,Object *env);
-    Object * apply3(Object *proc,Object *args,Object *env);
+    Object * eval(Object *exp,Object *evn);
+    Object * evlis(Object *exps,Object *env);
+    Object * apply(Object *proc,Object *args,Object *env);
     
-    //Object * apply2(Object *proc,Object *args,Object *env);
-    
-    static Object * eval(Object *exp,Object *evn);
-    static Object * evlis(Object *exps,Object *env);
-    static Object * apply(Object *prog,Object *args,Object *env);
     static Object * lookup(Object *id,Object* env);
     static Object * values(Object *id,Object *env);
     
