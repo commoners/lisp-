@@ -49,7 +49,8 @@ Object* Parser::parse(istream & in){
         return pair(in);
     }else if(c=='\''){
         //cout<<"':"<<endl;
-        return Object::cons(Object::symQuote,parse(in));
+        Object *str=parse(in);
+        return Object::cons(Object::symQuote,str);
     }else if(c==EOF){
         return NULL;
     }if (c == '#') {
@@ -88,18 +89,52 @@ Object* Parser::parse(istream & in){
         }
     }else if (c == '\'') { /* read quoted expression */
         return Object::cons(Object::symQuote, Object::cons(parse(in),Object::nil));
-    }else{
+    }
+    else if (c == '"') { /* read a string */
+        int i = 0;
+        char buf[BUFFER_SIZE]={0};
+        while ((c = in.get()) != '"') {
+            if (c == '\\') {
+                c = in.get();
+                if (c == 'n') {
+                    c = '\n';
+                }
+            }
+            if (c == EOF) {
+                fprintf(stderr, "non-terminated string literal\n");
+                exit(1);
+            }
+            /* subtract 1 to save space for '\0' terminator */
+            if (i < BUFFER_SIZE - 1) {
+                buf[i++] = c;
+            }
+            else {
+                fprintf(stderr,
+                        "string too long. Maximum length is %d\n",
+                        BUFFER_SIZE);
+                exit(1);
+            }
+        }
+        Object *obj;
+        buf[i] = '\0';
+        obj=Object::mkstring(buf);
+        return obj;
+    }
+    else{
         Object *obj;
         int i=0;
-        char buf[256]={0};
+        char buf[BUFFER_SIZE]={0};
         buf[i++]=c;
         while((c=in.get())!=' '&&c!=EOF&&c!=')'){
             buf[i++]=c;
         }
         in.unget();
         //cout<<"buf:"<<buf<<endl;
-        //obj=new Object(buf);
-        obj=Object::inter(buf);
+        size_t len=strlen(buf);
+        len--;
+        //cout<<len<<endl;
+//        cout<<"=======:"<<buf[0]<<buf[len]<<endl;
+            obj=Object::inter(buf);
         //obj->dprint();
         return obj;
     }
@@ -157,7 +192,7 @@ Object *Parser::pair(istream &in){
 void Parser::eatws(istream &in){
     int c;
     while ((c = in.get())!=EOF) {
-        if (isspace(c)||c=='\n') {
+        if (isspace(c)||c=='\n'||c=='\r') {
             //cout<<"isspace"<<endl;
             continue;
         }else if (c == ';') {//;注释忽略

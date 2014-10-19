@@ -19,7 +19,8 @@
 
 int test0(){
     Object::init();
-    Object o("hello");
+    Object *p=Object::mkobj("hello");
+    Object o=*p;
     cout<<Object::nil;
     cout<<o<<endl;
     Object* t=o.car(&o);
@@ -73,8 +74,10 @@ int test_eval(int number,char *test,char *result,int type){
     Object *ret;
     if(type==0){
         ret=obj->eval(obj,env);
-    }else {
+    }else if(type==1){
         ret=obj->eval_tail_call(obj, env);
+    }else if(type==3){
+        ret=obj->eval3(obj,env);
     }
     stringstream os;
     ret->dstream(os);
@@ -218,8 +221,8 @@ int test_eval(int type){
         "",//test_mix
         "",//test_mix1
         "13",//test_mix2
-        "t",//test_gt
-        "nil",//test_lt
+        "#t",//test_gt
+        "#f",//test_lt
     };
     for(int i=0;i<sizeof(test_string)/sizeof(char*);i++){
         test_eval(i,test_string[i],test_result[i],type);
@@ -240,6 +243,9 @@ int test4(){
 int test3(){
     return test_eval(0);
 }
+int test5(){
+    return test_eval(3);
+}
 
 void print_state (const std::ios& stream) {
     std::cout << " good()=" << stream.good();
@@ -255,7 +261,7 @@ int main(int argc, const char * argv[])
     Parser p;
     Object *env;
     Object *o;
-    FUN tests[]={test0,test1,test2,test3,test4,};
+    FUN tests[]={test0,test1,test2,test3,test4,test5};
     
     
     if(argc>=1){
@@ -303,7 +309,7 @@ int main(int argc, const char * argv[])
         }
         if(argf!=""){
             string line;
-            ifstream istrm(argf);
+            ifstream istrm(argf.c_str());
 //            print_state(istrm);
             if(istrm.fail()){
                 cout<<argf<<" file not exit."<<endl;
@@ -313,6 +319,9 @@ int main(int argc, const char * argv[])
                 Object *o;
                 Object *ret;
                 o=p.parse(istrm);
+                Memory::add_root(o);
+                Memory::add_root(env);
+
                 if(istrm.peek()==EOF){
                     break;
                 }
@@ -321,7 +330,8 @@ int main(int argc, const char * argv[])
                 }
                 if(argt==true){
                     //cout<<"artg=========="<<endl;
-                    ret=o->eval(o,env);
+                    //ret=o->eval(o,env);
+                    ret=o->eval3(o,env);
                 }else{
                     ret=o->eval2(o,env);
                 }
@@ -368,7 +378,7 @@ int main(int argc, const char * argv[])
                         }else{
                             ret=o->eval2(o,env);
                         }
-                        if(arginfo){
+                         if(arginfo){
                             cout<<"#result:";
                         }
                         if(ret!=Object::none){
@@ -381,8 +391,7 @@ int main(int argc, const char * argv[])
                             cout<<endl;
                         }
 
-                        
-                        
+//                        ret->gc();
                         //delete ret;
                         
                         line="";
