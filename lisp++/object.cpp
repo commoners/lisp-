@@ -790,7 +790,7 @@ calltail:
             }else{
                 update(def_var,def_val,topEnv);
             }
-            cout<<"hhehe"<<def_var<<" val"<<def_val<<endl;
+//            cout<<"hhehe"<<def_var<<" val"<<def_val<<endl;
         }else{
             def_var=caadr(exp);
             Object *params=cdadr(exp);
@@ -832,8 +832,8 @@ calltail:
     }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symLambda){
         Object *lambda_parms=cadr(exp);
         Object *lambda_body=cddr(exp);
-        cout<<"p:"<<lambda_parms<<endl;
-        cout<<"b:"<<lambda_body<<endl;
+        //cout<<"p:"<<lambda_parms<<endl;
+        //cout<<"b:"<<lambda_body<<endl;
         return mkproc(lambda_parms, lambda_body, env);
     }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symBegin){
         exp=cdr(exp);
