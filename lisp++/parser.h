@@ -30,6 +30,7 @@ public:
 private:
     void eatws(istream &in);
     bool is_delimiter(int c);
+    bool is_initial(int c);
  
 };
 

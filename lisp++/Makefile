@@ -4,7 +4,7 @@
 # # Mail:rootntsd@gmail.com
 # ##########################################################################################
 CPP = g++
-CXXFLAGS = -g  -Wall   -O2
+CXXFLAGS = -g  -Wall   -O
 LDFLAGS =
 
 LIBS = 
@@ -20,7 +20,7 @@ all:$(TARGET)
 test:$(TARGET) test.l
 	./$(TARGET) ./test.l
 clean:
-	rm *.o $(TARGET)
+	rm -rf *.o $(TARGET)
 
 $(TARGET):$(OBJS)
 	$(CPP) -o $(TARGET) $(OBJS) $(CXXFLAGS)

@@ -36,7 +36,7 @@ Object* Parser::parse(istream & in){
     Object *o=Object::nil;
     int c;
     short sign = 1;
-    size_t num = 0;
+    int num = 0;
     eatws(in);
     c=in.get();
     if(c==EOF)
@@ -61,17 +61,17 @@ Object* Parser::parse(istream & in){
             case 'f':
                 return Object::fee;
             case '\\':
+//                cout<<"===================="<<endl;
                 //return read_character(in);
             default:
                 error("unknown boolean or character literal\n");
                 
         }
-    }else if (isdigit(c) || (c == '-' && (isdigit(in.peek())))) {
-        /* read a fixnum */
+    }else if (isdigit(c) || ((c=='.'||c == '-') && (isdigit(in.peek())))) {
+//        cout<<"c:"<<(char)c<<endl;
         if (c == '-') {
             sign = -1;
-        }
-        else {
+        }else {
             in.unget();
         }
         while (isdigit(c = in.get())) {
@@ -82,10 +82,25 @@ Object* Parser::parse(istream & in){
             in.unget();
             //cout<<"mkint:"<<num<<endl;
             return Object::mkint(num);
-        }
-        else {
+        }else if(c=='.'){
+            double fnum=num*1.0;
+            double fdp=0.0;
+            double dp=0.1;
+            while (isdigit(c = in.get())) {
+                fdp = fdp  + (c - '0')*dp;
+//                cout<<"##:"<<(c - '0')*dp<<endl;
+                dp=dp*0.1;
+            }
+            fdp*=sign;
+            if(is_delimiter(c)){
+                in.unget();
+//                cout<<"fnum="<<fnum<<" fdp="<<fdp<<" ret:"<<(fnum+fdp)<<endl;
+                return Object::mkfloat(fdp+fnum);
+            }else{
+               error("float number not followed by delimiter\n");
+            }
+        }else {
             error("number not followed by delimiter\n");
-           
         }
     }else if (c == '\'') { /* read quoted expression */
         return Object::cons(Object::symQuote, Object::cons(parse(in),Object::nil));
@@ -120,23 +135,32 @@ Object* Parser::parse(istream & in){
         obj=Object::mkstring(buf);
         return obj;
     }
-    else{
+    else if(is_initial(c)|| ((c=='+'||c=='-')&&is_delimiter(in.peek()) ) ){
         Object *obj;
         int i=0;
         char buf[BUFFER_SIZE]={0};
-        buf[i++]=c;
-        while((c=in.get())!=' '&&c!=EOF&&c!=')'){
-            buf[i++]=c;
+        while(is_initial(c)||isdigit(c)||c=='+'||c=='-'){
+            if(i<BUFFER_SIZE-1){
+                buf[i++]=c;
+            }else{
+                cout<<"maximum length of buff "<<BUFFER_SIZE<<"length."<<endl;
+            }
+            c=in.get();
         }
-        in.unget();
-        //cout<<"buf:"<<buf<<endl;
-        size_t len=strlen(buf);
-        len--;
+        if(is_delimiter(c)){
+            buf[i]='\0';
+            in.unget();
+            obj=Object::inter(buf);
+            //obj->dprint();
+            return obj;
+        }else{
+            cout<<"symbol "<< (char)c<<" not followed by delimiter."<<endl;
+        }
         //cout<<len<<endl;
 //        cout<<"=======:"<<buf[0]<<buf[len]<<endl;
-            obj=Object::inter(buf);
-        //obj->dprint();
-        return obj;
+        
+    }else{
+        cout<<"unkown "<<c<<endl;
     }
     //cout<<"ret1"<<endl;
     return o;
@@ -159,32 +183,34 @@ Object *Parser::pair(istream &in){
     //car->dprint();
     eatws(in);
     c=in.get();
-    if (c == '.') {
+    if (c == '.'&&!isdigit(in.peek())) {
         c = in.peek();
+//        cout<<"pair c===:"<<(char)c<<endl;
         if (!is_delimiter(c)) {
-            error("dot not followed by delimiter\n");
-            
+                error("dot not followed by delimiter\n");
         }
         cdr = parse(in);
         eatws(in);
         c = in.get();
+//        cout<<"cc:"<<(char)c<<endl;
+//        cout<<"cdr:"<<cdr<<endl;
         if (c != ')') {
-            error("where was the trailing right paren?\n");
+//            error("where was the trailing right paren?\n");
             
         }
         return Object::cons(car,cdr);
     }else {
-        //cout<<"pair else "<<endl;
+//        cout<<"pair else "<<endl;
         
         if(in.eof())
             return Object::nil;
         
         in.unget();
         cdr = pair(in);
-        //cout<<"=car:";
+//        cout<<"=car:";
 //        car->dprint();
         
-        //cout<<"=cdr:";
+//        cout<<"=cdr:";
 //        cdr->dprint();
         Object *obj=Object::cons(car, cdr);
         //cout<<" cons:";
@@ -198,7 +224,7 @@ Object *Parser::pair(istream &in){
 void Parser::eatws(istream &in){
     int c;
     while ((c = in.get())!=EOF) {
-        if (isspace(c)||c=='\n'||c=='\r') {
+        if (isspace(c)) {
             //cout<<"isspace"<<endl;
             continue;
         }else if (c == ';') {//;注释忽略
@@ -210,6 +236,7 @@ void Parser::eatws(istream &in){
         //in.putback(c);
         break;;
     }
+    
     return ;
 }
 
@@ -218,6 +245,11 @@ bool Parser::is_delimiter(int c){
     return isspace(c) || c == EOF ||
     c == '('   || c == ')' ||
     c == '"'   || c == ';';
+}
+
+bool Parser::is_initial(int c) {
+    return isalpha(c) || c == '*' || c == '/' || c == '>' ||
+    c == '<' || c == '=' || c == '?' || c == '!';
 }
 
 

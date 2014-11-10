@@ -157,11 +157,17 @@ Object *Object::mksym(char *name){
     //DEBUG_INFO;
     return mkobj(name);
 }
-Object *Object::mkint(size_t val){
-    size_t *p=(size_t*) new int(sizeof(size_t));
+Object *Object::mkint(int val){
+    int *p=(int*) new int(sizeof(int));
     *p=val;
     Object *o=mkobj(INT,p);
      return o;
+}
+Object *Object::mkfloat(double val){
+    double *p=(double*) new double(sizeof(double));
+    *p=val;
+    Object *o=mkobj(FLOAT,p);
+    return o;
 }
 Object *Object::mkstring(char* name){
     Object *o=mkobj(name);
@@ -314,8 +320,7 @@ void Object::init(){
     symCrLf=inter("\n\r");
     
     //function.cpp
-    add_procedure("display", display);
-    add_procedure("newline", newline);
+    resist_functions();
     
     //    cout<<"topEnv:";topEnv->dprint();
 }
@@ -747,7 +752,7 @@ calltail:
     
     Object *sym=car(exp);
     //cout<<"     sym:"<<sym<<endl;
-    if(exp->type==INT||exp->type==STRING){//to do string boolean and more data type
+    if(exp->type==INT||exp->type==STRING||exp->type==FLOAT){//to do string boolean and more data type
 //        cout<<"ret:"<<exp<<endl;
         return exp;
     }else if(exp->type==SYM){
@@ -756,7 +761,8 @@ calltail:
         if(symbol==nil){
             symbol=lookup(exp,topEnv);
             if(symbol==nil){
-                cout<<"can't find symbol "<<exp<<endl;
+//                cout<<"can't find symbol "<<exp<<endl;
+//                cout<<topEnv<<endl;
 //                cout<<"exp->type:"<<exp->type<<endl;
                 symbol=nil;
             }
@@ -798,7 +804,8 @@ calltail:
             //def_val=cons(symLambda,cons(params,body));//make lambda
             //cout<<"def_var:"<<def_var<<" params:"<<params<<" body:"<<body<<endl;
             Object *proc;
-            proc=mkproc(car(exp)->symname(), params,body,env);
+//            cout<<" mkpro:"<<def_var->symname()<<" parm:"<<params<<" body:"<<body<<endl;
+            proc=mkproc(def_var->symname(), params,body,env);
             topEnv=extend(def_var,proc,topEnv);
             
         }
@@ -881,13 +888,16 @@ calltail:
             Object *proc_args=car(procedure);//arg
             Object *proc_body=cdr(procedure);//body
             Object *proc_env=procedure->obj[2];
+//            cout<<"     ##"<<procedure->symname()<<" proc_args:"<<proc_args<<" proc_body:"<<proc_body<<endl;
             env=extend(proc_args,arguments,proc_env);
 //            exp=cons(symBegin,proc_body);//make begin
             exp=proc_body;
             goto calltail;
-        }else if(procedure->type==SYM||procedure->type==INT||procedure->type==STRING){
+        }else if(procedure->type==SYM){
             exp=procedure;
             goto calltail;
+        }else if(procedure->type==INT||procedure->type==STRING||procedure->type==FLOAT){
+            return procedure;
         }else{
             cout<<"erro procedure type"<<procedure->type<<" "<<procedure<<"."<<endl;
         }
@@ -975,10 +985,11 @@ Object * Object::lookup(Object *id,Object* env){
     if(env==NULL||env==nil){
         return nil;
     }else if(env->type==CONS){
-        //cout<<"cmp id:"<<id<<" "<<caar(env)<<" :::"<< (id==caar(env))<<endl;
+//        cout<<"cmp id:"<<id<<" "<<caar(env)<<" :::"<< (id==caar(env))<<" ="<<(id->symname()==caar(env)->symname())<<" --:"<<
+//        strcmp(id->symname(),caar(env)->symname())<<" cmp:"<<id->symname()<<" "<<caar(env)->symname()<<endl;
 
-        if((id==caar(env))||id->symname()==caar(env)->symname()){
-            //cout<<"find"<<endl;
+        if((id==caar(env))||id->symname()==caar(env)->symname()||strcmp(id->symname(),caar(env)->symname())==0){
+//            cout<<"find"<<endl;
             return cdar(env);
         }else{
             return lookup(id, cdr(env));
@@ -1065,20 +1076,27 @@ Object *Object::findsym(char* name){
         //DEBUG_INFO;
         //if(name2!=NULL) cout<<"name2:"<<name2<<endl;
         if(name2!=NULL&&0==strcmp(name,name2)){
-            //cout<<"get:"<<name<<" symlist"<<(*symlist)<<endl;
+//            cout<<"get:"<<name<<" symlist"<<(*symlist)<<endl;
+//            cout<<"get:"<<name <<" aadr:"<<(int*)(symlist)<<endl;
             return symlist;
         }
     }
     return nil;
 }
-size_t Object::intval(Object *obj){
+int Object::intval(Object *obj){
     if(obj->type==INT){
         return *(int*)obj->data;
     }else{
         return -1;
     }
 }
-
+double Object::floatval(Object *obj){
+    if(obj->type==FLOAT){
+        return *(double*)obj->data;
+    }else{
+        return -1.0;
+    }
+}
 
 
 
@@ -1277,6 +1295,11 @@ void Object::dprint(Object *o){
             cout<<*(long*)o->data;
         else
             cout<<"data nil";
+    }else if(o->type==FLOAT){
+        if(o->data!=NULL)
+            cout<<*(double*)o->data;
+        else
+            cout<<"data nil";
     }else if(o->type==STRING){
         string str((const char*)o->data);
 //        cout<<"======================="<<endl;
@@ -1309,6 +1332,8 @@ ostream& Object::dstream(ostream &os,Object *o){
         os<<(char*)o->data;
     }else if(o->type==INT){
         os<<*(long*)o->data;
+    }else if(o->type==FLOAT){
+        os<<*(double*)o->data;
     }else if(o->type==STRING){
         string str((const char*)o->data);
         os<<str.substr(1,str.length()-2);
@@ -1350,6 +1375,8 @@ ostream& operator<<(ostream &cout,Object* obj){
             cout<<(obj->symname());
     }else if(obj->type==INT){
         cout<<*(int*)obj->data;
+    }else if(obj->type==FLOAT){
+        cout<<*(double*)obj->data;
     }else if(obj->type==STRING){
         string str((const char*)obj->data);
                 cout<<str;
@@ -1404,6 +1431,9 @@ ostream& operator<<(ostream &cout,Object&obj){
     }else if(obj.type==INT){
         cout<<"INT";
         cout<<" "<<*(int*)obj.data;
+    }else if(obj.type==FLOAT){
+        cout<<"FLOAT";
+        cout<<" "<<*(double*)obj.data;
     }else if(obj.type==STRING){
         cout<<"STRING";
         string str((const char*)obj.data);
@@ -1426,70 +1456,172 @@ ostream& operator<<(ostream &cout,Object&obj){
 
 
 //build in function
+
+//数学运算、字符串运算
 Object *Object::sum(Object *args){
-    size_t sum=0;
-//        cout<<"   sum args:";args->dprint();
-    for(sum=0;!isnil(args);args=cdr(args)){
-        //        cout<<"    car(args):";car(args)->dprint();
-        sum+=intval(car(args));
+    
+    if(car(args)->type==INT){
+        int sum=0;
+        //        cout<<"   sum args:";args->dprint();
+        for(sum=0;!isnil(args);args=cdr(args)){
+            //        cout<<"    car(args):";car(args)->dprint();
+            sum+=intval(car(args));
+        }
+        //        cout<<"    sum="<<sum<<endl;
+        return Object::mkint(sum);
+    }else if(car(args)->type==FLOAT){
+        double sum=0;
+        //        cout<<"   sum args:";args->dprint();
+        for(sum=0;!isnil(args);args=cdr(args)){
+            //        cout<<"    car(args):";car(args)->dprint();
+            sum+=floatval(car(args));
+        }
+        //        cout<<"    sum="<<sum<<endl;
+        return Object::mkfloat(sum);
+    }else{
+        cout<<"other type not support"<<endl;
+        return nil;
     }
-//        cout<<"    sum="<<sum<<endl;
-    return Object::mkint(sum);
+   
 }
 Object *Object::sub(Object *args){
-    size_t sub=0;
-//    cout<<"   sub args:";args->dprint();
-    if(cdr(args)==nil){//only firt args
-        sub=-intval(car(args));
+    
+    if(car(args)->type==INT){
+        int sub=0;
+        //    cout<<"   sub args:";args->dprint();
+        if(cdr(args)==nil){//only firt args
+            sub=-intval(car(args));
+        }else{
+            sub=intval(car(args));
+        }
+        for(args=cdr(args);!isnil(args);args=cdr(args)){
+            //        cout<<"    car(args):";car(args)->dprint();
+            sub-=intval(car(args));
+        }
+        //       cout<<"   ="<<sub<<endl;
+        return Object::mkint(sub);
+    }else if(car(args)->type==FLOAT){
+        double sub=0;
+        //    cout<<"   sub args:";args->dprint();
+        if(cdr(args)==nil){//only firt args
+            sub=-floatval(car(args));
+        }else{
+            sub=floatval(car(args));
+        }
+        for(args=cdr(args);!isnil(args);args=cdr(args)){
+            //        cout<<"    car(args):";car(args)->dprint();
+            sub-=floatval(car(args));
+        }
+        //       cout<<"   ="<<sub<<endl;
+        return Object::mkfloat(sub);
     }else{
-        sub=intval(car(args));
+        cout<<"other type not support"<<endl;
+        return nil;
     }
-    for(args=cdr(args);!isnil(args);args=cdr(args)){
-        //        cout<<"    car(args):";car(args)->dprint();
-        sub-=intval(car(args));
-    }
-//       cout<<"   ="<<sub<<endl;
-    return Object::mkint(sub);
 }
 
 Object *Object::mul(Object *args){
-    size_t mul=0;
     //    cout<<"   mul args:";args->dprint();
-    for(mul=intval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
-        //        cout<<"    car(args):";car(args)->dprint();
-        mul*=intval(car(args));
+    if(car(args)->type==INT){
+        int mul=0;
+        for(mul=intval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
+            //        cout<<"    car(args):";car(args)->dprint();
+            mul*=intval(car(args));
+        }
+        //    cout<<"    mul:"<<mul<<endl;
+        return Object::mkint(mul);
+    }else if(car(args)->type==FLOAT){
+        double mul=0;
+        for(mul=floatval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
+            //        cout<<"    car(args):";car(args)->dprint();
+            mul*=floatval(car(args));
+        }
+        //    cout<<"    mul:"<<mul<<endl;
+        return Object::mkfloat(mul);
+    }else{
+        cout<<"other type not support"<<endl;
+        return nil;
     }
-    //    cout<<"    mul:"<<mul<<endl;
-    return Object::mkint(mul);
+    
+    
 }
 Object *Object::div(Object *args){
-    size_t div=0;
-    //    cout<<"   div args:";args->dprint();
-    for(div=intval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
-        //        cout<<"    car(args):";car(args)->dprint();
-        div/=intval(car(args));
+    if(car(args)->type==INT){
+        int div=0;
+        //    cout<<"   div args:";args->dprint();
+        for(div=intval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
+            //        cout<<"    car(args):";car(args)->dprint();
+            div/=intval(car(args));
+        }
+        //    cout<<"    div:"<<div<<endl;
+        return Object::mkint(div);
+        
+    }else if(car(args)->type==FLOAT){
+        double div=0;
+        //    cout<<"   div args:";args->dprint();
+        for(div=floatval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
+            //        cout<<"    car(args):";car(args)->dprint();
+            div/=floatval(car(args));
+        }
+        //    cout<<"    div:"<<div<<endl;
+        return Object::mkfloat(div);
+    }else{
+        cout<<"other type not support"<<endl;
+        return nil;
     }
-    //    cout<<"    div:"<<div<<endl;
-    return Object::mkint(div);
+    
 }
 
 Object *Object::prim_numeq(Object *args) {
 //    cout<<"     primnumeq";args->dprint();
-    Object *o= intval(car(args)) == intval(car(cdr(args))) ? tee : fee;
 //    cout<<"     ="<<o<<endl;
-    return o;
+    
+    if(car(args)->type==INT){
+        Object *o= intval(car(args)) == intval(car(cdr(args))) ? tee : fee;
+        return o;
+    }else if(car(args)->type==FLOAT){
+        Object *o= floatval(car(args)) == floatval(car(cdr(args))) ? tee : fee;
+        return o;
+    }else{
+        cout<<"other type not support"<<endl;
+        return nil;
+    }
 }
 Object *Object::prim_numgt(Object *args) {
-    //    cout<<"primnumgt";args->dprint();
-    return intval(car(args)) > intval(car(cdr(args))) ? tee : fee;
+//        cout<<"primnumgt";args->dprint();
+    if(car(args)->type==INT){
+        long a=intval(car(args));
+        long b=intval(car(cdr(args)));
+//    cout<<a<<" > "<<b<<endl;
+        return a > b ? tee : fee;
+    }else if(car(args)->type==FLOAT){
+        double a=floatval(car(args));
+        double b=floatval(car(cdr(args)));
+        return a>b ? tee:fee;
+    }else{
+        cout<<"other type not support"<<endl;
+        return nil;
+    }
 }
 Object *Object::prim_numlt(Object *args) {
 //    cout<<"     primnumlt";args->dprint();
-    
-    Object *ret= intval(car(args)) < intval(car(cdr(args))) ? tee : fee;
-//    cout<<"     ="<<ret<<endl;
-    return ret;
+    if(car(args)->type==INT){
+        long a=intval(car(args));
+        long b=intval(car(cdr(args)));
+        Object *ret= a < b ? tee : fee;
+        //    cout<<"     ="<<ret<<endl;
+        return ret;
+    }else if(car(args)->type==FLOAT){
+        double a=floatval(car(args));
+        double b=floatval(car(cdr(args)));
+        return a<b ? tee:fee;
+    }else{
+        cout<<"other type not support"<<endl;
+        return nil;
+    }
 }
+//end of数学运算
+
 
 Object *Object::prim_cons(Object *args) {
     return cons(car(args), car(cdr(args)));

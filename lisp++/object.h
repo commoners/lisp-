@@ -31,11 +31,12 @@ typedef Object* (*FUNCTION)(Object *args) ;
 
 typedef enum ObjectType{
     INT,//1
-    SYM,//
-    CONS,//PAIR 2
+    SYM,//2
+    CONS,//PAIR 3
     PROC,//
     PRIMOP,//
     STRING,//
+    FLOAT,
 }OType;
 
 
@@ -139,8 +140,12 @@ public:
     
     static Object *inter(char *name);
     static Object *findsym(char* name);
-    static size_t intval(Object *obj);
-    static Object *mkint(size_t val);
+    static int intval(Object *obj);
+    static double floatval(Object *obj);
+
+    static Object *mkint(int val);
+    static Object *mkfloat(double val);
+
     static Object *mkstring(char* name);
     
     //primop buildin function

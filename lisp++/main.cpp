@@ -321,8 +321,8 @@ int main(int argc, const char * argv[])
                 o=p.parse(istrm);
                 //Memory::add_root(o);
                 //Memory::add_root(env);
-
-                if(istrm.peek()==EOF){
+//                cout<<"     @"<<o<<endl;
+                if(istrm.peek()==EOF&&o==Object::nil){
                     break;
                 }
                 if(arginfo){

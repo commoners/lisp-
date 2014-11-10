@@ -12,9 +12,11 @@
 #include <iostream>
 #include "object.h"
 
+void resist_functions();
 
 Object *display(Object *args);
 Object *newline(Object *args);
+Object *trace(Object *trace);
 
 
 #endif /* defined(__lisp____function__) */

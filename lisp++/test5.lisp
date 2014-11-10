@@ -26,9 +26,4 @@
         (+ (cc1 a (- b 1)) (cc1 (- a (se b)) b)))))
 ;(cc1 2 3)
 
-(define (fib n)
-  (cond ((= n 0) 0)
-        ((= n 1) 1)
-        (else (+ (fib (- n 1))
-                 (fib (- n 2))))))
-(fib 30)
+

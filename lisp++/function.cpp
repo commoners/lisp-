@@ -8,6 +8,12 @@
 
 #include "function.h"
 
+void resist_functions(){
+    Object::add_procedure("display", display);
+    Object::add_procedure("newline", newline);
+    
+}
+
 
 Object *display(Object *args){
 //  cout<<"   display args:";args->dprint();
@@ -24,4 +30,8 @@ Object *newline(Object *args){
     return Object::symCr;
 //    return Object::symCrLf;
 //    return Object::cons(Object::symCr,Object::symLf);
+}
+Object *trace(Object *trace){
+    
+    return Object::nil;
 }
