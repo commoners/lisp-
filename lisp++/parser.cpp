@@ -57,8 +57,11 @@ Object* Parser::parse(istream & in){
         c = in.get();
         switch (c) {
             case 't':
+//                cout<<"#t---"<<Object::tee<<endl;
                 return Object::tee;;
             case 'f':
+//                cout<<"#f---"<<Object::fee<<endl;
+
                 return Object::fee;
             case '\\':
 //                cout<<"===================="<<endl;
@@ -154,13 +157,13 @@ Object* Parser::parse(istream & in){
             //obj->dprint();
             return obj;
         }else{
-            cout<<"symbol "<< (char)c<<" not followed by delimiter."<<endl;
+            cout<<"symbol '"<< (char)c<<"' not followed by delimiter."<<endl;
         }
         //cout<<len<<endl;
 //        cout<<"=======:"<<buf[0]<<buf[len]<<endl;
         
     }else{
-        cout<<"unkown "<<c<<endl;
+        cout<<"sytax error on '"<<(char)c<<"'."<<endl;
     }
     //cout<<"ret1"<<endl;
     return o;

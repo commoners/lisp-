@@ -10,6 +10,7 @@
 #include <iomanip>
 #include "function.h"
 #include "memory.h"
+#include <iomanip>
 
 #define caar(obj)   car(car(obj))
 #define cadr(obj)   car(cdr(obj))
@@ -736,173 +737,181 @@ Object * Object::eval(Object *exp,Object *env){
     Object *arguments;
     Object *result;
 calltail:
-//   cout<<"#exp:"<<exp<<" #car(exp):"<<car(exp)<<" #cdr(exp):"<<cdr(exp)<<endl;
-//    exp->dprint();
-   /* cout<<"         exp: "<<exp<<" ";
-    if(exp->type==SYM||exp->type==INT){
-        Object* symbol=lookup(exp, env);
-        if(symbol==nil) symbol=lookup(exp,topEnv);
-        if(symbol!=nil)
-            cout<<" ==> "<<symbol<<endl;
-        else cout<<endl;
-    }else{
-        cout<<endl;
-    }*/
+    //   cout<<"#exp:"<<exp<<" #car(exp):"<<car(exp)<<" #cdr(exp):"<<cdr(exp)<<endl;
+    //    exp->dprint();
+    /* cout<<"         exp: "<<exp<<" ";
+     if(exp->type==SYM||exp->type==INT){
+     Object* symbol=lookup(exp, env);
+     if(symbol==nil) symbol=lookup(exp,topEnv);
+     if(symbol!=nil)
+     cout<<" ==> "<<symbol<<endl;
+     else cout<<endl;
+     }else{
+     cout<<endl;
+     }*/
     
     
-    Object *sym=car(exp);
-    //cout<<"     sym:"<<sym<<endl;
+    
     if(exp->type==INT||exp->type==STRING||exp->type==FLOAT){//to do string boolean and more data type
 //        cout<<"ret:"<<exp<<endl;
         return exp;
     }else if(exp->type==SYM){
-//        cout<<"     lookpu:"<<exp<<endl;
+//        cout<<"     lookup:"<<exp<<endl;
+        if(exp==tee||exp==fee||exp==nil)
+            return exp;
         Object* symbol=lookup(exp, env);
         if(symbol==nil){
             symbol=lookup(exp,topEnv);
             if(symbol==nil){
 //                cout<<"can't find symbol "<<exp<<endl;
-//                cout<<topEnv<<endl;
-//                cout<<"exp->type:"<<exp->type<<endl;
+                //                cout<<topEnv<<endl;
+                //                cout<<"exp->type:"<<exp->type<<endl;
                 symbol=nil;
             }
         }
         return symbol;
-    }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symQuote){
-//        cout<<"============="<<cdr(exp)<<endl;
-        return cdr(exp);
-    }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symSetb){
-        Object *set_var=cadr(exp);
-        Object *set_val=caddr(exp);
-//        cout<<"     set_var:"<<set_var<<" set_val:"<<set_val<<endl;
-        set_val=set_val->eval(set_val,env);
-//        cout<<"     =set_var:"<<set_var<<" =set_val:"<<set_val<<endl;
-
-        Object *ret=update(set_var, set_val, env);
-        if(ret==nil)
-            ret=update(set_var, set_val, topEnv);
-        return symStatus;
-    }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symDefine){
-        Object *def_var;
-        Object *def_val;
-        
-        if(cadr(exp)->type==SYM){
-            def_var=cadr(exp);
-            def_val=caddr(exp);
-            def_val=def_val->eval(def_val,env);
-            Object *findret=lookup(def_var, topEnv);;
-            if(findret==nil){
-                topEnv=extend(def_var,def_val,topEnv);
-            }else{
-                update(def_var,def_val,topEnv);
-            }
-//            cout<<"hhehe"<<def_var<<" val"<<def_val<<endl;
-        }else{
-            def_var=caadr(exp);
-            Object *params=cdadr(exp);
-            Object *body=cddr(exp);
-            //def_val=cons(symLambda,cons(params,body));//make lambda
-            //cout<<"def_var:"<<def_var<<" params:"<<params<<" body:"<<body<<endl;
-            Object *proc;
-//            cout<<" mkpro:"<<def_var->symname()<<" parm:"<<params<<" body:"<<body<<endl;
-            proc=mkproc(def_var->symname(), params,body,env);
-            topEnv=extend(def_var,proc,topEnv);
-            
-        }
-        
-        return symStatus;
-    }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symIf){
-        Object* if_test=cadr(exp);
-        Object* if_consequent=caddr(exp);
-        Object * if_alternate=cadddr(exp);
-        Object *test=if_test->eval(if_test,env);
-//        cout<<"     exp:"<<exp<<endl;
-//        cout<<"         if_test:"<<if_test<<"="<<test<<endl;
-//        cout<<"         if_consequent:"<<if_consequent<<endl;
-//        cout<<"         if_alternate:"<<if_alternate<<endl;
-//        cout<<"         cdddr(exp):"<<cdddr(exp)<<endl;
-        if(test==tee||(test!=nil&&test!=fee)){
-            exp=if_consequent;//first exp
-        }else{//else exp
-            if(cdddr(exp)==nil){
-                //cout<<"if_alternate is nil"<<endl;
-                exp=fee;
-            }else{
-                //cout<<"      =====if_alternate:"<<if_alternate<<endl;
-                exp=if_alternate;
-            }
-        }
-//        cout<<"     ret:"<<exp<<endl;
-//        cout<<endl;
-
-        goto calltail;
-    }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symLambda){
-        Object *lambda_parms=cadr(exp);
-        Object *lambda_body=cddr(exp);
-        //cout<<"p:"<<lambda_parms<<endl;
-        //cout<<"b:"<<lambda_body<<endl;
-        return mkproc(lambda_parms, lambda_body, env);
-    }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symBegin){
-        exp=cdr(exp);
-        while(cdr(exp)!=nil){//is the last
-            exp->eval(car(exp),env);
-            exp= cdr(exp);
-        }
-        exp=car(exp);
-        goto calltail;
-    }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symCond){
-        Object *the_clauses=cdr(exp);
-        if(cdr(the_clauses)==nil){
-            return fee;
-        }else{
-//            cout<<"             clauses:"<<the_clauses<<endl;
-            exp=expand_clauses(the_clauses);
-//            cout<<"             clauses="<<exp<<endl;
-        }
-        goto calltail;
-    }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symAtom){
-                //cout<<"============="<<cadr(exp)<<endl;
-        exp=cadr(exp);
-        exp=exp->eval(exp,env);
-        return exp->atom();
-    }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symLet){
-        
-    }else if(exp->type==CONS){//proc to execute
-//        cout<<"     app:"<<exp<<endl;
-        Object *op=car(exp);
-        Object *ol=cdr(exp);
-        
-//        cout<<"         op:"<<op<<" type:"<<op->type<<" ol:"<<ol<<endl;
-        procedure=op->eval(op,env);
-        if(procedure==nil)//can't find procedure
-            return symStatus;
-        
-        arguments=ol->evlis(ol, env);
-//        cout<<"         =op:"<<op<<" type:"<<procedure->type<<" =ol:"<<arguments<<endl;
-//        cout<<"     app:"<<exp<<" ["<<op<<" "<<arguments<<"]"<<endl;
-    
-        if(procedure->type==PRIMOP){
-//            cout<<"         "<<((FUNCTION)(procedure->data))(arguments)<<endl;
-            return ((FUNCTION)(procedure->data))(arguments);
-        }else if(procedure->type==PROC){
-            Object *proc_args=car(procedure);//arg
-            Object *proc_body=cdr(procedure);//body
-            Object *proc_env=procedure->obj[2];
-//            cout<<"     ##"<<procedure->symname()<<" proc_args:"<<proc_args<<" proc_body:"<<proc_body<<endl;
-            env=extend(proc_args,arguments,proc_env);
-//            exp=cons(symBegin,proc_body);//make begin
-            exp=proc_body;
-            goto calltail;
-        }else if(procedure->type==SYM){
-            exp=procedure;
-            goto calltail;
-        }else if(procedure->type==INT||procedure->type==STRING||procedure->type==FLOAT){
-            return procedure;
-        }else{
-            cout<<"erro procedure type"<<procedure->type<<" "<<procedure<<"."<<endl;
-        }
     }else{
-        cout<<" eval erro "<<exp<<endl;
+        Object *sym=car(exp);
+//        cout<<"     sym:"<<sym<<endl;
+        if(exp->type==CONS&&car(exp)->type==SYM&&sym==symQuote){
+            //        cout<<"============="<<cdr(exp)<<endl;
+            return cdr(exp);
+        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symSetb){
+            Object *set_var=cadr(exp);
+            Object *set_val=caddr(exp);
+            //        cout<<"     set_var:"<<set_var<<" set_val:"<<set_val<<endl;
+            set_val=set_val->eval(set_val,env);
+            //        cout<<"     =set_var:"<<set_var<<" =set_val:"<<set_val<<endl;
+            
+            Object *ret=update(set_var, set_val, env);
+            if(ret==nil)
+                ret=update(set_var, set_val, topEnv);
+            return symStatus;
+        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symDefine){
+            Object *def_var;
+            Object *def_val;
+            
+            if(cadr(exp)->type==SYM){
+                def_var=cadr(exp);
+                def_val=caddr(exp);
+                def_val=def_val->eval(def_val,env);
+                Object *findret=lookup(def_var, topEnv);;
+                if(findret==nil){
+                    topEnv=extend(def_var,def_val,topEnv);
+                }else{
+                    update(def_var,def_val,topEnv);
+                }
+                //            cout<<"hhehe"<<def_var<<" val"<<def_val<<endl;
+            }else{
+                def_var=caadr(exp);
+                Object *params=cdadr(exp);
+                Object *body=cddr(exp);
+                //def_val=cons(symLambda,cons(params,body));//make lambda
+                //cout<<"def_var:"<<def_var<<" params:"<<params<<" body:"<<body<<endl;
+                Object *proc;
+                //            cout<<" mkpro:"<<def_var->symname()<<" parm:"<<params<<" body:"<<body<<endl;
+                proc=mkproc(def_var->symname(), params,body,env);
+                topEnv=extend(def_var,proc,topEnv);
+                
+            }
+            
+            return symStatus;
+        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symIf){
+            Object* if_test=cadr(exp);
+            Object* if_consequent=caddr(exp);
+            Object * if_alternate=cadddr(exp);
+            Object *test=if_test->eval(if_test,env);
+            //        cout<<"     exp:"<<exp<<endl;
+            //        cout<<"         if_test:"<<if_test<<"="<<test<<endl;
+            //        cout<<"         if_consequent:"<<if_consequent<<endl;
+            //        cout<<"         if_alternate:"<<if_alternate<<endl;
+            //        cout<<"         cdddr(exp):"<<cdddr(exp)<<endl;
+            if(test==tee||(test!=nil&&test!=fee)){
+                exp=if_consequent;//first exp
+            }else{//else exp
+                if(cdddr(exp)==nil){
+                    //cout<<"if_alternate is nil"<<endl;
+                    exp=fee;
+                }else{
+                    //cout<<"      =====if_alternate:"<<if_alternate<<endl;
+                    exp=if_alternate;
+                }
+            }
+            //        cout<<"     ret:"<<exp<<endl;
+            //        cout<<endl;
+            
+            goto calltail;
+        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symLambda){
+            Object *lambda_parms=cadr(exp);
+            Object *lambda_body=cddr(exp);
+            //cout<<"p:"<<lambda_parms<<endl;
+            //cout<<"b:"<<lambda_body<<endl;
+            return mkproc(lambda_parms, lambda_body, env);
+        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symBegin){
+            exp=cdr(exp);
+            while(cdr(exp)!=nil){//is the last
+                exp->eval(car(exp),env);
+                exp= cdr(exp);
+            }
+            exp=car(exp);
+            goto calltail;
+        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symCond){
+            Object *the_clauses=cdr(exp);
+            if(cdr(the_clauses)==nil){
+                return fee;
+            }else{
+//                            cout<<"             clauses:"<<the_clauses<<endl;
+                exp=expand_clauses(the_clauses);
+//                            cout<<"             clauses="<<exp<<endl;
+            }
+            goto calltail;
+        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symAtom){
+            //cout<<"============="<<cadr(exp)<<endl;
+            exp=cadr(exp);
+            exp=exp->eval(exp,env);
+            return exp->atom();
+        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symLet){
+            
+        }else if(exp->type==CONS){//proc to execute
+//                    cout<<"     app:"<<exp<<endl;
+            Object *op=car(exp);
+            Object *ol=cdr(exp);
+            
+//                    cout<<"         op:"<<op<<" type:"<<op->type<<" ol:"<<ol<<endl;
+            procedure=op->eval(op,env);
+            if(procedure==nil)//can't find procedure
+                return symStatus;
+            
+            arguments=ol->evlis(ol, env);
+            //        cout<<"         =op:"<<op<<" type:"<<procedure->type<<" =ol:"<<arguments<<endl;
+//            cout<<"     app:"<<exp<<" ["<<op<<" "<<arguments<<"]"<<endl;
+            
+            if(procedure->type==PRIMOP){
+                //            cout<<"         "<<((FUNCTION)(procedure->data))(arguments)<<endl;
+                Object *ret= ((FUNCTION)(procedure->data))(arguments);
+//                cout<<"call fun:"<<procedure<<" arg:"<<arguments<<"  ret:"<<ret<<endl;
+//                cout<<endl;
+                return ret;
+            }else if(procedure->type==PROC){
+                Object *proc_args=car(procedure);//arg
+                Object *proc_body=cdr(procedure);//body
+                Object *proc_env=procedure->obj[2];
+                //            cout<<"     ##"<<procedure->symname()<<" proc_args:"<<proc_args<<" proc_body:"<<proc_body<<endl;
+                env=extend(proc_args,arguments,proc_env);
+                exp=cons(symBegin,proc_body);//make begin this should avoid
+//                exp=proc_body;
+                goto calltail;
+            }else if(procedure->type==SYM){
+                exp=procedure;
+                goto calltail;
+            }else if(procedure->type==INT||procedure->type==STRING||procedure->type==FLOAT){
+                return procedure;
+            }else{
+                cout<<"erro procedure type"<<procedure->type<<" "<<procedure<<"."<<endl;
+            }
+        }else{
+            cout<<" eval erro "<<exp<<endl;
+        }
     }
     cout<<"eval unknow state"<<endl;
     return exp;
@@ -1086,14 +1095,24 @@ Object *Object::findsym(char* name){
 int Object::intval(Object *obj){
     if(obj->type==INT){
         return *(int*)obj->data;
+    }else if(obj->type==FLOAT){
+        int d;
+        d=(int)*(double*)obj->data;
+        return d;
     }else{
+        cout<<"erro type intval."<<endl;
         return -1;
     }
 }
 double Object::floatval(Object *obj){
     if(obj->type==FLOAT){
         return *(double*)obj->data;
+    }else if(obj->type==INT){
+        double d;
+        d=(double)*(int*)obj->data;
+        return d;
     }else{
+        cout<<"erro type floatval."<<endl;
         return -1.0;
     }
 }
@@ -1292,7 +1311,7 @@ void Object::dprint(Object *o){
         cout<<(char*)o->data;
     }else if(o->type==INT){
         if(o->data!=NULL)
-            cout<<*(long*)o->data;
+            cout<<*(int*)o->data;
         else
             cout<<"data nil";
     }else if(o->type==FLOAT){
@@ -1376,7 +1395,7 @@ ostream& operator<<(ostream &cout,Object* obj){
     }else if(obj->type==INT){
         cout<<*(int*)obj->data;
     }else if(obj->type==FLOAT){
-        cout<<*(double*)obj->data;
+        cout<<setprecision(10)<<*(double*)obj->data;
     }else if(obj->type==STRING){
         string str((const char*)obj->data);
                 cout<<str;
@@ -1403,6 +1422,7 @@ ostream& operator<<(ostream &cout,Object* obj){
         
     }else if(obj->type==PROC){
         cout<<"#<PROC "<<obj->data<<">";
+//        cout<<obj->symname();
         
     }else if(obj->type==PRIMOP){
         cout<<"#<PRIMOP "<<obj->data<<">";
@@ -1457,167 +1477,275 @@ ostream& operator<<(ostream &cout,Object&obj){
 
 //build in function
 
-//数学运算、字符串运算
+//数学运算、字符串运算(todo)
 Object *Object::sum(Object *args){
+//    cout<<"   sum args:";args->dprint();
+    double fsum=0.0;
+    int isum=0;
+    bool isfloat=false;
     
-    if(car(args)->type==INT){
-        int sum=0;
-        //        cout<<"   sum args:";args->dprint();
-        for(sum=0;!isnil(args);args=cdr(args)){
-            //        cout<<"    car(args):";car(args)->dprint();
-            sum+=intval(car(args));
+    for(;!isnil(args);args=cdr(args)){
+        //        cout<<"    car(args):";car(args)->dprint();
+        Object *num=car(args);
+        if(num->type==INT){
+            isum+=intval(num);
+        }else if(num->type==FLOAT){
+            isfloat=true;
+            fsum+=floatval(num);
+        }else{
+            cout<<"unkown type to sum."<<endl;
         }
-        //        cout<<"    sum="<<sum<<endl;
-        return Object::mkint(sum);
-    }else if(car(args)->type==FLOAT){
-        double sum=0;
-        //        cout<<"   sum args:";args->dprint();
-        for(sum=0;!isnil(args);args=cdr(args)){
-            //        cout<<"    car(args):";car(args)->dprint();
-            sum+=floatval(car(args));
-        }
-        //        cout<<"    sum="<<sum<<endl;
-        return Object::mkfloat(sum);
-    }else{
-        cout<<"other type not support"<<endl;
-        return nil;
     }
-   
+//    cout<<"       "<<fsum+isum<<endl;
+    if(isfloat){
+        return Object::mkfloat(fsum+isum);
+    }
+    return Object::mkint(isum);
 }
 Object *Object::sub(Object *args){
+    int isub=0;
+    double fsub=0.0;
+    bool isfloat=false;
     
-    if(car(args)->type==INT){
-        int sub=0;
-        //    cout<<"   sub args:";args->dprint();
-        if(cdr(args)==nil){//only firt args
-            sub=-intval(car(args));
-        }else{
-            sub=intval(car(args));
+//    cout<<"   sub args:";args->dprint();
+    Object *first=(car(args));
+    if(cdr(args)==nil){
+        if(first->type==INT){
+            return Object::mkint(-intval(first));
+        }else if(first->type==FLOAT){
+            return Object::mkfloat(-floatval(first));
         }
-        for(args=cdr(args);!isnil(args);args=cdr(args)){
-            //        cout<<"    car(args):";car(args)->dprint();
-            sub-=intval(car(args));
-        }
-        //       cout<<"   ="<<sub<<endl;
-        return Object::mkint(sub);
-    }else if(car(args)->type==FLOAT){
-        double sub=0;
-        //    cout<<"   sub args:";args->dprint();
-        if(cdr(args)==nil){//only firt args
-            sub=-floatval(car(args));
-        }else{
-            sub=floatval(car(args));
-        }
-        for(args=cdr(args);!isnil(args);args=cdr(args)){
-            //        cout<<"    car(args):";car(args)->dprint();
-            sub-=floatval(car(args));
-        }
-        //       cout<<"   ="<<sub<<endl;
-        return Object::mkfloat(sub);
     }else{
-        cout<<"other type not support"<<endl;
-        return nil;
+        
+        if(first->type==INT){
+            isub=intval(first);
+        }else if(first->type==FLOAT){
+            fsub=floatval(first);
+            isfloat=true;
+        }
+
+        for(args=cdr(args);!isnil(args);args=cdr(args)){
+            //        cout<<"    car(args):";car(args)->dprint();
+            Object *num=car(args);
+//            cout<<num<<endl;
+            if(num->type==INT){
+                isub-=intval(num);
+            }else if(num->type==FLOAT){
+                isfloat=true;
+                fsub-=floatval(num);
+            }else{
+                cout<<"unkown type to sub."<<endl;
+            }
+        }
     }
+//    cout<<"       "<<fsub+isub<<endl;
+
+    if(isfloat){
+        return Object::mkfloat(fsub+isub);
+    }
+    return Object::mkint(isub);
 }
 
 Object *Object::mul(Object *args){
-    //    cout<<"   mul args:";args->dprint();
-    if(car(args)->type==INT){
-        int mul=0;
-        for(mul=intval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
-            //        cout<<"    car(args):";car(args)->dprint();
-            mul*=intval(car(args));
+//    cout<<"   mul args:";args->dprint();
+    int imul=1;
+    double fmul=1.0;
+    bool isfloat=false;
+    
+    //cout<<"   sub args:";args->dprint();
+    Object *first=(car(args));
+    if(cdr(args)==nil){
+        if(first->type==INT){
+            return Object::mkint(intval(first));
+        }else if(first->type==FLOAT){
+            return Object::mkfloat(floatval(first));
         }
-        //    cout<<"    mul:"<<mul<<endl;
-        return Object::mkint(mul);
-    }else if(car(args)->type==FLOAT){
-        double mul=0;
-        for(mul=floatval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
-            //        cout<<"    car(args):";car(args)->dprint();
-            mul*=floatval(car(args));
-        }
-        //    cout<<"    mul:"<<mul<<endl;
-        return Object::mkfloat(mul);
     }else{
-        cout<<"other type not support"<<endl;
-        return nil;
+        for(;!isnil(args);args=cdr(args)){
+            //        cout<<"    car(args):";car(args)->dprint();
+            Object *num=car(args);
+//                        cout<<num<<endl;
+            if(num->type==INT){
+                imul*=intval(num);
+            }else if(num->type==FLOAT){
+                isfloat=true;
+                fmul*=floatval(num);
+            }else{
+                cout<<"unkown type to mul."<<endl;
+            }
+        }
     }
+//    cout<<"       "<<fmul*imul<<endl;
+
+    if(isfloat){
+        return Object::mkfloat(fmul*imul);
+    }
+    return Object::mkint(imul);
     
     
 }
 Object *Object::div(Object *args){
-    if(car(args)->type==INT){
-        int div=0;
-        //    cout<<"   div args:";args->dprint();
-        for(div=intval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
-            //        cout<<"    car(args):";car(args)->dprint();
-            div/=intval(car(args));
+    
+    int idiv=1;
+    double fdiv=1.0;
+    bool isfloat=false;
+    
+//    cout<<"   div args:";args->dprint();
+    Object *first=(car(args));
+    if(cdr(args)==nil){
+        if(first->type==INT){
+            return Object::mkint(intval(first));
+        }else if(first->type==FLOAT){
+            return Object::mkfloat(floatval(first));
         }
-        //    cout<<"    div:"<<div<<endl;
-        return Object::mkint(div);
-        
-    }else if(car(args)->type==FLOAT){
-        double div=0;
-        //    cout<<"   div args:";args->dprint();
-        for(div=floatval(car(args)),args=cdr(args);!isnil(args);args=cdr(args)){
-            //        cout<<"    car(args):";car(args)->dprint();
-            div/=floatval(car(args));
-        }
-        //    cout<<"    div:"<<div<<endl;
-        return Object::mkfloat(div);
     }else{
-        cout<<"other type not support"<<endl;
-        return nil;
+//        if(first->type==INT){
+//            idiv=intval(first);
+//        }else if(first->type==FLOAT){
+            fdiv=floatval(first);
+//            isfloat=true;
+//        }
+//        if(first->type==FLOAT){
+//            isfloat=true;
+//        }
+        for(args=cdr(args);!isnil(args);args=cdr(args)){
+//            cout<<"    car(args):";car(args)->dprint();
+            Object *num=car(args);
+//            cout<<num<<endl;
+            if(num->type==INT){
+//                idiv/=intval(num);
+//                cout<<"idiv:"<<idiv<<endl;
+            }else if(num->type==FLOAT){
+                isfloat=true;
+            
+            }else{
+//                cout<<"unkown type to div."<<endl;
+            }
+            fdiv/=floatval(num);
+        }
     }
+//    cout<<"       "<<fdiv<<endl;
+
+//    if(isfloat){
+        return Object::mkfloat(fdiv);
+//    }
+//    return Object::mkint(fdiv);
     
 }
 
 Object *Object::prim_numeq(Object *args) {
 //    cout<<"     primnumeq";args->dprint();
 //    cout<<"     ="<<o<<endl;
+    Object *first=(car(args));
+    if(cdr(args)==nil){
+        cout<<"error = require two argument at least."<<endl;
+        return nil;
+    }else{
+        int icur=intval(first);
+        double fcur=floatval(first);
+        
+        for(args=cdr(args);!isnil(args);args=cdr(args)){
+            Object *num=car(args);
+            if(num->type==INT){
+                if(icur!=intval(num)){
+                    return fee;
+                }else{
+                    icur=intval(num);
+                    fcur=floatval(num);
+                }
+            }else if(num->type==FLOAT){
+                if(fcur!=floatval(num)){
+                    return fee;
+                }else{
+                    fcur=floatval(num);
+                    icur=fcur;
+                }
+            }else{
+                cout<<"other type not support"<<endl;
+                return nil;
+            }
+        }
+        return tee;
+    }
     
-    if(car(args)->type==INT){
-        Object *o= intval(car(args)) == intval(car(cdr(args))) ? tee : fee;
-        return o;
-    }else if(car(args)->type==FLOAT){
-        Object *o= floatval(car(args)) == floatval(car(cdr(args))) ? tee : fee;
-        return o;
-    }else{
-        cout<<"other type not support"<<endl;
-        return nil;
-    }
 }
+
 Object *Object::prim_numgt(Object *args) {
-//        cout<<"primnumgt";args->dprint();
-    if(car(args)->type==INT){
-        long a=intval(car(args));
-        long b=intval(car(cdr(args)));
-//    cout<<a<<" > "<<b<<endl;
-        return a > b ? tee : fee;
-    }else if(car(args)->type==FLOAT){
-        double a=floatval(car(args));
-        double b=floatval(car(cdr(args)));
-        return a>b ? tee:fee;
-    }else{
-        cout<<"other type not support"<<endl;
+//    cout<<"primnumgt";args->dprint();
+    Object *first=(car(args));
+    if(cdr(args)==nil){
+        cout<<"error > require two argument at least."<<endl;
         return nil;
+    }else{
+        int icur=intval(first);
+        double fcur=floatval(first);
+        
+        for(args=cdr(args);!isnil(args);args=cdr(args)){
+            Object *num=car(args);
+            if(num->type==INT){
+                if(icur<=intval(num)){
+                    return fee;
+                }else{
+                    icur=intval(num);
+                    fcur=floatval(num);
+                }
+            }else if(num->type==FLOAT){
+                if(fcur<=floatval(num)){
+//                    cout<<"     "<<fee<<endl;
+                    return fee;
+                }else{
+                    fcur=floatval(num);
+                    icur=fcur;
+                }
+            }else{
+                cout<<"other type not support"<<endl;
+                return nil;
+            }
+        }
+//        cout<<"     "<<tee<<endl;
+        return tee;
     }
+
 }
 Object *Object::prim_numlt(Object *args) {
 //    cout<<"     primnumlt";args->dprint();
-    if(car(args)->type==INT){
-        long a=intval(car(args));
-        long b=intval(car(cdr(args)));
-        Object *ret= a < b ? tee : fee;
-        //    cout<<"     ="<<ret<<endl;
-        return ret;
-    }else if(car(args)->type==FLOAT){
-        double a=floatval(car(args));
-        double b=floatval(car(cdr(args)));
-        return a<b ? tee:fee;
-    }else{
-        cout<<"other type not support"<<endl;
+    Object *first=(car(args));
+    if(cdr(args)==nil){
+        cout<<"error < require two argument at least."<<endl;
         return nil;
+    }else{
+        int icur=intval(first);
+        double fcur=floatval(first);
+        
+        for(args=cdr(args);!isnil(args);args=cdr(args)){
+            Object *num=car(args);
+//            cout<<"         num:"<<num<<endl;
+            if(num->type==INT){
+                if(icur>=intval(num)){
+//                    cout<<"     3:"<<fee<<endl;
+
+                    return fee;
+                }else{
+                    icur=intval(num);
+                    fcur=floatval(num);
+                }
+            }else if(num->type==FLOAT){
+                if(fcur>=floatval(num)){
+//                    cout<<"     "<<fee<<endl;
+
+                    return fee;
+                }else{
+                    fcur=floatval(num);
+                    icur=intval(num);
+                }
+            }else{
+                cout<<"other type not support"<<endl;
+                return nil;
+            }
+        }
+//        cout<<"     ee:"<<tee<<endl;
+
+        return tee;
     }
 }
 //end of数学运算
