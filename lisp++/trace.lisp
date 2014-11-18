@@ -7,17 +7,17 @@
 (fib (- n 2))))))
 
 
-;(display (sys-top-env))
+;(display ())
 ;(display "\n")
 
 
 (define (find-proc name)
-    (sys-find name (sys-top-env)))
+    (sys:find name (sys:top-env)))
 (define (update-proc name proc)
-    (sys-update name proc (sys-top-env)))
+    (sys:update name proc (sys:top-env)))
 
 
-;(display "sys-find:")
+;(display "sys:find:")
 ;(find-proc 'fib)
 
 (define (sub a)
@@ -43,7 +43,7 @@
                         (begin (print-level *trace-level* "-") (display name) (display x) (display "\n")
                                 (set! *trace-level* (+ *trace-level* 1))
 (set! result (proc (car x) (car (cdr x)) ))
-;                                (set! result (invoke (cons proc  x )))
+;                                (set! result (cons proc  x ))
                                  (set! *trace-level* (- *trace-level* 1)) (print-level *trace-level* "-") (display result) (display "\n") result)) )
         ;(display (cons proc new-proc))
         (update-proc name new-proc)
@@ -60,16 +60,16 @@
     (begin
             (if (zero? x) 0 (add1 (f (sub1 x))))) )
 
-;(display (sys-top-env))
+;(display (sys:top-env))
 ;(trace 'f)
 (f 10)
-;(display (sys-top-env))
+;(display (sys:top-env))
 
 
 
 ;(trace "fib")
 (trace 'fib)
-;(display (sys-top-env))
+;(display (sys:top-env))
 
 ;(trace '+)
 ;(display '-)

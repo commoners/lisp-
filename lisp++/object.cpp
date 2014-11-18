@@ -43,6 +43,8 @@
 
 //Object *nil;
 Object *Object::nil=NULL;
+Object *Object::el=NULL;
+
 Object *Object::symbols=NULL;
 Object *Object::topEnv=NULL;
 Object *Object::symLambda=NULL;
@@ -85,11 +87,11 @@ Memory *Object::memory=Memory::instance();
 
 
 Object::Object(){
-    this->type=CONS;
+    this->type=EL;
     this->data=NULL;
     this->obj=NULL;
     isalive=true;
-    this->flag=INIT;
+    this->flag=NULL;
     //cout<<__FUNCTION__<<" "<<(int *)this<<endl;
     memory->add_obj(this);
 }
@@ -214,6 +216,13 @@ char*  Object::symname(Object *obj){
         ret=(char *)(obj->data);
 //        cout<<obj->data<<endl;
 //        cout<<"sym==="<<ret<<endl;
+    }else if(obj->type==BOOL){
+        ret=(char *)(obj->data);
+    }else if(obj->type==PROC){
+        if(obj->data!=NULL)
+            ret=(char*)obj->data;
+    }else{
+        cout<<__FUNCTION__<<" get "<<obj<<" symname erro."<<endl;
     }
     
     return ret;
@@ -262,74 +271,78 @@ Object *Object::inter(char *name){
 
 void Object::init(){
     if(topEnv==NULL){
-    nil=inter("nil");
-    symbols=cons(nil,nil);
-    
-    tee=inter("#t");
-    fee=inter("#f");
-    none=inter("");
-    topEnv=cons(tee,fee);
-    topEnv=cons(topEnv,nil);
-    
-    Memory::add_root(symbols);
-    Memory::add_root(topEnv);
-    
-    
-    Object *add=mkpriop(Object::sum);
-    Object *sub=mkpriop(Object::sub);
-    Object *mul=mkpriop(Object::mul);
-    Object *div=mkpriop(Object::div);
-    
-    //    cout<<"add:";add->dprint();
-    topEnv=extend(inter("+"),add,topEnv);
-    topEnv=extend(inter("-"),sub,topEnv);
-    topEnv=extend(inter("*"),mul,topEnv);
-    topEnv=extend(inter("/"),div,topEnv);
-    
-    Object *mnumeq=mkpriop(Object::prim_numeq);
-    Object *cons=mkpriop(Object::prim_cons);
-    Object *car=mkpriop(Object::prim_car);
-    Object *cdr=mkpriop(Object::prim_cdr);
-    Object *mnumgt=mkpriop(Object::prim_numgt);
-    Object *mnumlt=mkpriop(Object::prim_numlt);
-    Object *primor=mkpriop(Object::prim_or);
-    Object *primand=mkpriop(Object::prim_and);
-
-    
-    topEnv=extend(inter("="),mnumeq,topEnv);
-    topEnv=extend(inter("cons"),cons,topEnv);
-    topEnv=extend(inter("car"),car,topEnv);
-    topEnv=extend(inter("cdr"),cdr,topEnv);
-    
-    topEnv=extend(inter(">"),mnumgt,topEnv);
-    topEnv=extend(inter("<"),mnumlt,topEnv);
-    topEnv=extend(inter("or"),primor,topEnv);
-    topEnv=extend(inter("and"),primand,topEnv);
-
-    
-     symCond=inter("cond");
-    symIf=inter("if");
-    symQuote=inter("quote");
-    symDefine=inter("define");
-    symSetb=inter("set!");
-    symLambda=inter("lambda");
-    symBegin=inter("begin");
-    symElse=inter("else");
-    symAtom=inter("atom");
-    symEq=inter("eq");
-    symCar=inter("car");
-    symCdr=inter("cdr");
-    symLabel=inter("label");
-    symStatus=inter("");
-    symAnd=inter("and");
-    symOr=inter("or");
-    symLet=inter("let");
-    symCr=inter("\r");
-    symLf=inter("\n");
-    symCrLf=inter("\n\r");
-    
-    //function.cpp
-    resist_functions();
+        nil=inter("nil");
+        el=mkobj(EL,(void*)NULL);
+        
+        symbols=cons(nil,nil);
+        
+        tee=inter("#t");
+        tee->type=BOOL;
+        fee=inter("#f");
+        fee->type=BOOL;
+        none=inter("");
+        topEnv=cons(tee,fee);
+        topEnv=cons(topEnv,nil);
+        
+        Memory::add_root(symbols);
+        Memory::add_root(topEnv);
+        
+        
+        Object *add=mkpriop(Object::sum);
+        Object *sub=mkpriop(Object::sub);
+        Object *mul=mkpriop(Object::mul);
+        Object *div=mkpriop(Object::div);
+        
+        //    cout<<"add:";add->dprint();
+        topEnv=extend(inter("+"),add,topEnv);
+        topEnv=extend(inter("-"),sub,topEnv);
+        topEnv=extend(inter("*"),mul,topEnv);
+        topEnv=extend(inter("/"),div,topEnv);
+        
+        Object *mnumeq=mkpriop(Object::prim_numeq);
+        Object *cons=mkpriop(Object::prim_cons);
+        Object *car=mkpriop(Object::prim_car);
+        Object *cdr=mkpriop(Object::prim_cdr);
+        Object *mnumgt=mkpriop(Object::prim_numgt);
+        Object *mnumlt=mkpriop(Object::prim_numlt);
+        Object *primor=mkpriop(Object::prim_or);
+        Object *primand=mkpriop(Object::prim_and);
+        
+        
+        topEnv=extend(inter("="),mnumeq,topEnv);
+        topEnv=extend(inter("cons"),cons,topEnv);
+        topEnv=extend(inter("car"),car,topEnv);
+        topEnv=extend(inter("cdr"),cdr,topEnv);
+        
+        topEnv=extend(inter(">"),mnumgt,topEnv);
+        topEnv=extend(inter("<"),mnumlt,topEnv);
+        topEnv=extend(inter("or"),primor,topEnv);
+        topEnv=extend(inter("and"),primand,topEnv);
+        
+        
+        symCond=inter("cond");
+        symIf=inter("if");
+        symQuote=inter("quote");
+        symDefine=inter("define");
+        symSetb=inter("set!");
+        symLambda=inter("lambda");
+        symBegin=inter("begin");
+        symElse=inter("else");
+        symAtom=inter("atom");
+        symEq=inter("eq");
+        symCar=inter("car");
+        symCdr=inter("cdr");
+        symLabel=inter("label");
+        symStatus=inter("");
+        symAnd=inter("and");
+        symOr=inter("or");
+        symLet=inter("let");
+        symCr=inter("\r");
+        symLf=inter("\n");
+        symCrLf=inter("\n\r");
+        
+        //function.cpp
+        resist_functions();
     }
     
     //    cout<<"topEnv:";topEnv->dprint();
@@ -752,8 +765,9 @@ Object * Object::eval(Object *exp,Object *env){
     Object *arguments;
     Object *result;
 calltail:
-    //   cout<<"#exp:"<<exp<<" #car(exp):"<<car(exp)<<" #cdr(exp):"<<cdr(exp)<<endl;
-    //    exp->dprint();
+//       cout<<"  #exp:"<<exp<<" #car(exp):"<<car(exp)<<" #cdr(exp):"<<cdr(exp)<<endl;
+//        exp->dprint();
+//    exp->tprint();
     /* cout<<"         exp: "<<exp<<" ";
      if(exp->type==SYM||exp->type==INT){
      Object* symbol=lookup(exp, env);
@@ -767,7 +781,7 @@ calltail:
     
     
     
-    if(exp->type==INT||exp->type==STRING||exp->type==FLOAT){//to do string boolean and more data type
+    if(exp->type==INT||exp->type==STRING||exp->type==FLOAT||exp->type==BOOL){//to do string boolean and more data type
 //        cout<<"ret:"<<exp<<endl;
         return exp;
     }else if(exp->type==SYM){
@@ -866,7 +880,7 @@ calltail:
             return mkproc(lambda_parms, lambda_body, env);
         }else if(sym==symBegin){
             exp=cdr(exp);
-            while(cdr(exp)!=nil){//is the last
+            while(cdr(exp)!=el){//is the last
                 exp->eval(car(exp),env);
                 exp= cdr(exp);
             }
@@ -955,7 +969,7 @@ calltail:
             if(procedure->type==PRIMOP){
 //                            cout<<"         "<<((FUNCTION)(procedure->data))(arguments)<<endl;
                 Object *ret= ((FUNCTION)(procedure->data))(arguments);
-//                cout<<"call fun:"<<procedure<<" arg:"<<arguments<<"  ret:"<<ret<<endl;
+//                cout<<"         call fun:"<<procedure<<" arg:"<<arguments<<"  ret:"<<ret<<endl;
 //                cout<<endl;
                 return ret;
             }else if(procedure->type==PROC){
@@ -977,11 +991,11 @@ calltail:
                 cout<<"erro procedure type"<<procedure->type<<" "<<procedure<<"."<<endl;
             }
         }else{
-            cout<<"eval erro "<<exp<<endl;
+            cout<<"eval erro on exp "<<exp<<"."<<endl;
 //            exp->tprint();
         }
     }
-    cout<<"eval unknow state"<<endl;
+    cout<<"eval unknow state."<<endl;
     return exp;
     
 }
@@ -1398,6 +1412,8 @@ void Object::dprint(Object *o){
         cout<<"#<PROC "<<(char*)o->data<<">";
     }else if(o==nil){
         cout<<"nil";
+    }else if(o==el){
+        
     }else{
         cout<<"(";
         dprint(o->car());
@@ -1420,7 +1436,7 @@ ostream& Object::dstream(ostream &os,Object *o){
     }else if(o->type==INT){
         os<<*(long*)o->data;
     }else if(o->type==FLOAT){
-        os<<*(double*)o->data;
+        os<<setprecision(10)<<*(double*)o->data;
     }else if(o->type==STRING){
         string str((const char*)o->data);
         os<<str.substr(1,str.length()-2);
@@ -1432,6 +1448,8 @@ ostream& Object::dstream(ostream &os,Object *o){
         os<<"nil";
     }else if(o==none){
         
+    }else if(o==el){
+        os<<"nil";
     }else{
         os<<"(";
         dstream(os,o->car());
@@ -1444,7 +1462,80 @@ ostream& Object::dstream(ostream &os,Object *o){
 istream& operator>>(istream &cin,Object &obj){
     return cin;
 }
+
+ostream& Object::write(ostream &os,Object *obj){
+//    obj->print();
+//    obj->dprint();
+    switch (obj->type) {
+        case EL:
+            os<<"()";
+            break;
+        case INT:
+            os<<*(int*)obj->data;
+            break;
+        case FLOAT:
+            os<<setprecision(10)<<*(double*)obj->data;
+            break;
+        case STRING:{
+            string str((const char*)obj->data);
+            os<<str;
+            break;
+        }
+        case SYM:{
+//            if((obj->isnil())){
+//                os<<"nil";
+//            }else{
+            if(obj->data!=NULL)
+                os<<(obj->symname());
+//            }
+            break;
+        }
+        case BOOL:
+            
+            break;
+        case CONS:
+            os<<"(";
+            write_pair(os,obj);
+            os<<")";
+            break;
+        case PRIMOP:
+            os<<"#<primop "<<obj->data<<">";
+            break;
+        case PROC:{
+            os<<"#<procedure ";
+            if(obj->data!=NULL)
+                os<<(char*)obj->data;
+            os<<">";
+            break;
+        }
+        default:
+            os<<"undefine ";
+            break;
+    }
+    return os;
+}
+ostream& Object::write_pair(ostream &os,Object *obj){
+    Object *first=obj->car();
+    Object *rest=obj->cdr();
+    Object::write(cout,first);
+    if(first->type==CONS){
+        cout<<" ";
+        Object::write(cout,rest);
+    }else if(rest->type==EL){
+        
+    }else{
+        cout<<" . ";
+        Object::write(cout,rest);
+    }
+    return cout;
+}
+
 ostream& operator<<(ostream &cout,Object* obj){
+//    return   Object::write(cout,obj);
+//    Object::write(std::cout,obj);
+
+//    cout<<" ";
+//    std::cout<<*obj<<endl;
     
     if(obj==NULL){
         cout<<"NULL";
@@ -1452,15 +1543,13 @@ ostream& operator<<(ostream &cout,Object* obj){
     }
     else if(obj==obj->none){
         return cout;
-    }
-    if(obj->type==SYM){
-        if((obj->isnil())){
-            cout<<"nil";
-            return cout;
-        }
+    }else if(obj->type==EL){
+        cout<<"()";
+        return cout;
+    }else if(obj->type==SYM||obj->type==BOOL){
         if(obj->data!=NULL)
             cout<<(obj->symname());
-    }else if(obj->type==INT){
+    } else if(obj->type==INT){
         cout<<*(int*)obj->data;
     }else if(obj->type==FLOAT){
         cout<<setprecision(10)<<*(double*)obj->data;
@@ -1472,15 +1561,17 @@ ostream& operator<<(ostream &cout,Object* obj){
         cout<<"(";
         while(true) {
             cout<<(obj->car());
-            if((obj->cdr()->isnil())){
+            if((obj->cdr()==Object::el)){
                 cout<<")";
                 break;
             }else{
                 cout<<" ";
             }
             obj=(obj->cdr());
-            if(obj->type!=CONS){
-                cout<<" . ";
+             if(obj->type==EL){
+//                        cout<<"()";
+            }else if(obj->type!=CONS){
+                cout<<". ";
                 cout<<obj;
                 cout<<")";
                 break;

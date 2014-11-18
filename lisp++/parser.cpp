@@ -32,6 +32,8 @@ Object* Parser::parse(string inputs){
     return parse(isp);
 }
 
+
+
 Object* Parser::parse(istream & in){
     Object *o=Object::nil;
     int c;
@@ -47,10 +49,6 @@ Object* Parser::parse(istream & in){
     if(c=='('){
        // cout<<"(:"<<endl;
         return pair(in);
-    }else if(c=='\''){
-        //cout<<"':"<<endl;
-        Object *str=parse(in);
-        return Object::cons(Object::symQuote,str);
     }else if(c==EOF){
         return NULL;
     }if (c == '#') {
@@ -105,9 +103,18 @@ Object* Parser::parse(istream & in){
         }else {
             error("number not followed by delimiter\n");
         }
-    }else if (c == '\'') { /* read quoted expression */
-        return Object::cons(Object::symQuote, Object::cons(parse(in),Object::nil));
     }
+        else if(c=='\''){
+        //cout<<"':"<<endl;
+        Object *str=parse(in);
+//        cout<<"str:"<<str<<endl;
+        return Object::cons(Object::symQuote,str);
+    }
+//   else if (c == '\'') { /* read quoted expression */
+//        Object *ret= Object::cons(Object::symQuote, Object::cons(parse(in),Object::el));
+////        cout<<"ret:"<<ret<<endl;
+//        return ret;
+//    }
     else if (c == '"') { /* read a string */
         int i = 0;
         char buf[BUFFER_SIZE]={0};
@@ -138,7 +145,7 @@ Object* Parser::parse(istream & in){
         obj=Object::mkstring(buf);
         return obj;
     }
-    else if(is_initial(c)|| ((c=='+'||c=='-')&&is_delimiter(in.peek()) ) ){
+    else if(is_initial(c) ||((c=='+'||c=='-')&&is_delimiter(in.peek()) ) ){
         Object *obj;
         int i=0;
         char buf[BUFFER_SIZE]={0};
@@ -149,6 +156,8 @@ Object* Parser::parse(istream & in){
                 cout<<"maximum length of buff "<<BUFFER_SIZE<<"length."<<endl;
             }
             c=in.get();
+//            cout<<"ccc:"<<(char)c<<endl;
+
         }
         if(is_delimiter(c)){
             buf[i]='\0';
@@ -157,6 +166,7 @@ Object* Parser::parse(istream & in){
             //obj->dprint();
             return obj;
         }else{
+//            cout<<c<<" buf:"<<buf<<endl;
             cout<<"symbol '"<< (char)c<<"' not followed by delimiter."<<endl;
         }
         //cout<<len<<endl;
@@ -175,9 +185,13 @@ Object *Parser::pair(istream &in){
     
     
     eatws(in);
+    
+    if(in.eof())
+        return Object::nil;
+    
     c=in.get();
     if(c==')'){
-        return Object::nil;
+        return Object::el;
     }
     in.unget();
     //cout<<"car===begin"<<endl;;
@@ -209,6 +223,7 @@ Object *Parser::pair(istream &in){
             return Object::nil;
         
         in.unget();
+        
         cdr = pair(in);
 //        cout<<"=car:";
 //        car->dprint();
@@ -243,20 +258,7 @@ void Parser::eatws(istream &in){
     return ;
 }
 
-int is_gbk(int ch){
-    if(ch<0) return 0;
-    unsigned char *c;
-    c=(unsigned char*)&ch;
-//    cout<<"char:"<<ch<<endl;
-    if (c[0]>=0xa1){
-        if (c[0]==0xa3)
-            return 1;//全角字符
-        else
-            return 2;//汉字
-    }else{
-        return 0;//英文、数字、英文标点
-    }
-}
+
 
 bool Parser::is_delimiter(int c){
     return isspace(c) || c == EOF ||
@@ -264,11 +266,32 @@ bool Parser::is_delimiter(int c){
     c == '"'   || c == ';';
 }
 
+
+//if((ch1>=0x81)&&(ch1<=0xfe))    //GB码
+//if((ch1>=0xa1)&&(ch1<=0xfe))    //BIG5码
+int is_gbk(int ch){
+    if(ch<0) return 0;
+    unsigned char *c;
+    c=(unsigned char*)&ch;
+    if(c[0]>=0x81&&c[0]<=0xef){
+        return 1;
+    }
+    return 0;
+//    if (c[0]>=0xa1){
+//        if (c[0]==0xa3)
+//            return 1;//全角字符
+//        else
+//            return 2;//汉字
+//    }else{
+//        return 0;//英文、数字、英文标点
+//    }
+}
+
 bool Parser::is_initial(int c) {
-//    cout<<"is gbk:"<<is_gbk(c)<<" is alpha:"<<isalpha(c)<<" ret:"<<(is_gbk(c)==2&&!isalpha(c))<<endl;
+//    cout<<"c:"<<c<<" is gbk:"<<is_gbk(c)<<" is alpha:"<<isalpha(c)<<" ret:"<<(is_gbk(c)==2&&!isalpha(c))<<endl;
     
     return isalpha(c) || c == '*' || c == '/' || c == '>' ||
-    c == '<' || c == '=' || c == '?' || c == '!';
+    c == '<' || c == '=' || c == '?' || c == '!'||is_gbk(c)||c=='.'||c==':';
 }
 
 

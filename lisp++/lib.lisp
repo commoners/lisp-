@@ -12,6 +12,7 @@
 
 ;(print-level 10 "--")
 
+(define nil '())
 
 (define *trace-functions nil)
 (define *trace-level* 1)
@@ -36,8 +37,9 @@
 (+ n 1))
 (define (sub1 n)
 (- n 1))
-(define (zero? n)
-(= 0 n))
+
+;(define (zero? n)
+;(= 0 n))
 
 (define (atom? x) (not (pair? x)))
 
@@ -67,5 +69,6 @@
 ;;>=
 (define (>= x y)
 (or (> x y) (= x y)))
+
 
 

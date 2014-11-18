@@ -30,6 +30,7 @@ class Memory;
 typedef Object* (*FUNCTION)(Object *args) ;
 
 typedef enum ObjectType{
+    EL,//empyt list
     INT,//0
     SYM,//1
     CONS,//PAIR 2
@@ -37,6 +38,10 @@ typedef enum ObjectType{
     PRIMOP,//
     STRING,//
     FLOAT,
+    INPUT_PORT,
+    OUTPUT_PORT,
+    EOBJ,//empty obj
+    BOOL,
 }ObjType;
 
 
@@ -80,6 +85,8 @@ public:
     
     //global object
     static Object *nil;
+    static Object *el;
+    
     static Object *symbols;
     static Object *topEnv;
     static Object *symLambda;
@@ -173,10 +180,13 @@ public:
     void tprint();
     void dprint();
     void dprint(Object *o);
+    
     ostream& dstream(ostream &os,Object *o);
     ostream& dstream(ostream &os);
                             
-    
+    static ostream& write(ostream &os,Object *obj);
+    static ostream& write_pair(ostream &os,Object *obj);
+
 
     Object *eval(Object *env=NULL);
     Object *cond(Object *env=NULL);

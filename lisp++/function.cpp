@@ -19,11 +19,24 @@ void resist_functions(){
 //    Object::add_procedure("trace", trace);
     Object::add_procedure("not", notf);
     Object::add_procedure("pair?", is_pair);
-    Object::add_procedure("sys-top-env", get_top_env);
-    Object::add_procedure("sys-lookup", lookup);
-    Object::add_procedure("sys-find", lookup);
-    Object::add_procedure("sys-update", update);
+    
+    Object::add_procedure("sys:top-env", get_top_env);
+    Object::add_procedure("sys:lookup", lookup);
+    Object::add_procedure("sys:find", lookup);
+    Object::add_procedure("sys:update", update);
+    
     Object::add_procedure("load", load);
+    Object::add_procedure("symbol?", is_symbol);
+    Object::add_procedure("procedure?", is_procedure);
+    Object::add_procedure("null?", is_null);
+    Object::add_procedure("integer?", is_interger);
+    Object::add_procedure("boolean?", is_boolean);
+    Object::add_procedure("real?", is_real);
+    Object::add_procedure("eq?", is_eq);
+    Object::add_procedure("atom?", is_atom);
+
+    
+
 
 
 }
@@ -80,6 +93,85 @@ Object *is_pair(Object *args){
 //    cout<<"args car:"<<args->car()<<endl;
     if(args->car()->gettype()==CONS&&args->car()->car()!=Object::nil){
 //        cout<<"is_pair tee"<<endl;
+        return Object::tee;
+    }
+    return Object::fee;
+}
+
+Object *is_number(Object *args){
+    if(args->car()->gettype()==FLOAT||args->car()->gettype()==INT){
+        return Object::tee;
+    }
+    return Object::fee;
+ }
+Object *is_interger(Object *args){
+    if(args->car()->gettype()==INT){
+        return Object::tee;
+    }
+    return Object::fee;
+}
+Object *is_boolean(Object *args){
+    if(args->car()->gettype()==BOOL){
+        return Object::tee;
+    }
+    return Object::fee;
+}
+Object *is_real(Object *args){
+    if(args->car()->gettype()==FLOAT||args->car()->gettype()==INT){
+        return Object::tee;
+    }
+    return Object::fee;
+}
+Object *is_eq(Object *args){
+    if(args->car()==args->cdr()->car()){
+        return Object::tee;
+    }
+    return Object::fee;
+}
+Object *is_zero(Object *args){
+    Object *obj=args->car();
+    int type=obj->gettype();
+    if(type==INT ){
+        return Object::intval(obj)==0? Object::tee :Object::fee ;
+    }else if(type==FLOAT){
+        return Object::floatval(obj)==0.0? Object::tee :Object::fee ;
+    }else{
+        cout<<"type not support."<<endl;
+    }
+    return Object::fee;
+}
+
+Object *is_symbol(Object *args){
+//    cout<<__FUNCTION__<<"  args:";args->dprint();
+
+    if(args->car()->gettype()==SYM){
+        return Object::tee;
+    }
+    return Object::fee;
+}Object *is_string(Object *args){
+    if(args->car()->gettype()==STRING){
+        return Object::tee;
+    }
+    return Object::fee;
+}Object *is_char(Object *args){
+    
+    return Object::fee;
+}
+Object *is_atom(Object *args){
+    if(args->car()->gettype()!=CONS){
+        return Object::tee;
+    }
+    return Object::fee;
+}
+Object *is_procedure(Object *args){
+    if(args->car()->gettype()==PROC||args->car()->gettype()==PRIMOP){
+        return Object::tee;
+    }
+    return Object::fee;
+}
+Object *is_null(Object *args){
+//    cout<<__FUNCTION__<<"  args:";args->dprint();
+    if(args->car()==Object::el){
         return Object::tee;
     }
     return Object::fee;

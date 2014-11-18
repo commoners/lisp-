@@ -81,7 +81,7 @@ int test_eval(int number,char *test,char *result,int type){
     }
     stringstream os;
     ret->dstream(os);
-    
+//    os<<ret;
     if(os.str()!=result){
         cout<<"[FAILED] test"<<number<<" input:"<<test<<" result:"<<result<<" ret:"<<os.str()<<endl;
         return 0;
@@ -203,7 +203,7 @@ int test_eval(int type){
         test_lt
     };
     char *test_result[]={
-        "56",//test_primop
+        "56.66666667",//test_primop
         "10",//test_lambda
         "1128",//test_lambda2
         "",//test_define
@@ -390,7 +390,8 @@ int main(int argc, const char * argv[])
                         if(arginfo){
                             cout<<endl;
                         }
-
+//                        cout<<"dprint:";
+//                        ret->dprint();
 //                        ret->gc();
                         //delete ret;
                         

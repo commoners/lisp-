@@ -1,0 +1,16 @@
+(load "lib.lisp")
+
+(define the-false-value (cons "false" "boolean"))
+
+(symbol? 'foo)
+;===>  #t
+(symbol? (car '(a b)))
+;===>  #t
+(symbol? "bar")
+;===>  #f
+(symbol? 'nil)
+;===>  #t
+(symbol? '())
+;===>  #f
+(symbol? #f)
+;===>  #f
