@@ -42,7 +42,7 @@ Object* Parser::parse(istream & in){
     if(c==EOF)
         return o;
     
-    //cout<<"char:"<<(char)c<<endl;
+//    cout<<"char:"<<(char)c<<endl;
     
     if(c=='('){
        // cout<<"(:"<<endl;
@@ -163,7 +163,7 @@ Object* Parser::parse(istream & in){
 //        cout<<"=======:"<<buf[0]<<buf[len]<<endl;
         
     }else{
-        cout<<"sytax error on '"<<(char)c<<"'."<<endl;
+        cout<<"syntax error on '"<<(char)c<<"'."<<endl;
     }
     //cout<<"ret1"<<endl;
     return o;
@@ -243,6 +243,20 @@ void Parser::eatws(istream &in){
     return ;
 }
 
+int is_gbk(int ch){
+    if(ch<0) return 0;
+    unsigned char *c;
+    c=(unsigned char*)&ch;
+//    cout<<"char:"<<ch<<endl;
+    if (c[0]>=0xa1){
+        if (c[0]==0xa3)
+            return 1;//全角字符
+        else
+            return 2;//汉字
+    }else{
+        return 0;//英文、数字、英文标点
+    }
+}
 
 bool Parser::is_delimiter(int c){
     return isspace(c) || c == EOF ||
@@ -251,6 +265,8 @@ bool Parser::is_delimiter(int c){
 }
 
 bool Parser::is_initial(int c) {
+//    cout<<"is gbk:"<<is_gbk(c)<<" is alpha:"<<isalpha(c)<<" ret:"<<(is_gbk(c)==2&&!isalpha(c))<<endl;
+    
     return isalpha(c) || c == '*' || c == '/' || c == '>' ||
     c == '<' || c == '=' || c == '?' || c == '!';
 }

@@ -17,6 +17,13 @@ void resist_functions();
 Object *display(Object *args);
 Object *newline(Object *args);
 Object *trace(Object *trace);
+Object *notf(Object *args);
+Object *is_pair(Object *args);
+Object *get_top_env(Object*args);
+Object *lookup(Object *args);
+Object *update(Object *args);
+Object *load(Object *args);
+
 
 
 #endif /* defined(__lisp____function__) */

@@ -30,14 +30,15 @@ class Memory;
 typedef Object* (*FUNCTION)(Object *args) ;
 
 typedef enum ObjectType{
-    INT,//1
-    SYM,//2
-    CONS,//PAIR 3
-    PROC,//
+    INT,//0
+    SYM,//1
+    CONS,//PAIR 2
+    PROC,//3
     PRIMOP,//
     STRING,//
     FLOAT,
-}OType;
+}ObjType;
+
 
 
 class Object{
@@ -130,11 +131,12 @@ public:
     static Object *mksym(char *name);
     static char*  symname(Object *obj);
  
-    static Object * mkobj(OType type,int count,...);
+    static Object * mkobj(ObjType type,int count,...);
     static Object * mkobj(char*name);
-    static Object * mkobj(OType type,void* data);
+    static Object * mkobj(ObjType type,void* data);
 
     static Object * mkpriop(FUNCTION fun);
+    
     static Object * mkproc(Object *args,Object *body,Object* env);
     static Object * mkproc(char* name,Object *args,Object *body,Object* env);
     
@@ -216,7 +218,7 @@ private:
     void *data;
     Object **obj;
     bool isalive;
-    OType type;
+    ObjType type;
 };
 
 

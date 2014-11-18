@@ -103,21 +103,23 @@ Object* Object::mkobj(char* name){
     thiz->obj=NULL;
     thiz->isalive=true;
     thiz->flag=INIT;
+//    cout<<(char *)thiz->data<<endl;
     return thiz;
 }
 
 
-Object *Object::mkobj(OType type,void* data){
+Object *Object::mkobj(ObjType type,void* data){
     Object* thiz=memory->new_obj();
     thiz->type=type;
     thiz->data=data;
+//    cout<<(char*)thiz->data<<endl;
     thiz->obj=NULL;
     thiz->isalive=true;
     thiz->flag=INIT;
     return thiz;
 }
 
-Object* Object::mkobj(OType type,int count,...){
+Object* Object::mkobj(ObjType type,int count,...){
     Object *thiz=memory->new_obj();
     va_list ap;
     int i;
@@ -126,6 +128,7 @@ Object* Object::mkobj(OType type,int count,...){
     thiz->obj=memory->new_objs(count);
     thiz->type = type;
     thiz->isalive=true;
+    thiz->data=NULL;
     for(i = 0; i < count; i++){
        thiz->obj[i] =(Object *)va_arg(ap,Object*);
         //        cout<<"obj["<<i<<"]="<<*(obj[i])<<endl;
@@ -180,6 +183,7 @@ Object * Object::mkpriop(FUNCTION fun){
     Object *o=mkobj(PRIMOP,(void*)fun);
     return o;
 }
+
 Object * Object::mkproc(Object *args,Object *body,Object* env){
     Object *o=  mkobj(PROC,3,args,body,env);
     return o;
@@ -202,12 +206,15 @@ Object * Object::mkproc(char* name,Object *args,Object *body,Object* env){
 
 
 char*  Object::symname(Object *obj){
-    char* ret="";
+//    cout<<__FILE__<<__LINE__<<endl;
+    char* ret=NULL;
     if(obj==NULL||obj->data==NULL){
         return ret;
+    }else if(obj->type==SYM||obj->type==STRING){
+        ret=(char *)(obj->data);
+//        cout<<obj->data<<endl;
+//        cout<<"sym==="<<ret<<endl;
     }
-    ret=(char *)(obj->data);
-    //    cout<<ret<<endl;
     
     return ret;
 }
@@ -254,6 +261,7 @@ Object *Object::inter(char *name){
 }
 
 void Object::init(){
+    if(topEnv==NULL){
     nil=inter("nil");
     symbols=cons(nil,nil);
     
@@ -322,6 +330,7 @@ void Object::init(){
     
     //function.cpp
     resist_functions();
+    }
     
     //    cout<<"topEnv:";topEnv->dprint();
 }
@@ -395,15 +404,15 @@ call_eval_start:
                             cout<<" ###else:"<<cdar(e)<<endl;
                             //cout<<" ============###else:"<<cddar(e)<<endl;
                             if(cddar(e)==nil){
-                                cout<<" ==============else cdar:"<<cdar(e)<<endl;
+//                                cout<<" ==============else cdar:"<<cdar(e)<<endl;
 
                                 exp=cdar(e); //->eval2(cdar(e),env);
-                                cout<<" ==============else ret:"<<exp<<endl;
+//                                cout<<" ==============else ret:"<<exp<<endl;
                                 //return exp;
                                 goto call_eval_start;
 
                             }else{
-                                cout<<"test"<<endl;
+//                                cout<<"test"<<endl;
                                 exp=cons(symBegin,cdar(e));
                             }
                         }else{
@@ -415,7 +424,7 @@ call_eval_start:
                         Object *cond=car(e)->eval2(car(e),env);
                         if(cond!=nil){
                             exp=cdar(e);
-                            cout<<"ret exp:"<<exp<<endl;
+//                            cout<<"ret exp:"<<exp<<endl;
                             if(exp==nil){
                                 exp=cond;
                             }
@@ -490,10 +499,13 @@ call_eval_start:
                 }else{
                     vars=caadr(exp);
                     Object *proc;
-                    //env=extend(vars,proc,env);
-                    proc=mkproc(car(exp)->symname(), cdadr(exp),vals,env);
-                    topEnv=extend(vars,proc,topEnv);
+                        //env=extend(vars,proc,env);
+//                        cout<<"update "<<vars<<" "<<endl;
+                        proc=mkproc(car(exp)->symname(), cdadr(exp),vals,env);
+                        topEnv=extend(vars,proc,topEnv);
+                    
                     return none;
+                    
                 }
                 
             }else if(ex==symLambda||(ex->car()!=nil&&ex->car()==symLambda)){
@@ -722,6 +734,9 @@ Object *Object::expand_clauses(Object *clauses) {
                 exit(1);
             }
         }
+//        else if(rest==nil){
+//            return first;
+//        }
         else {
             Object* if_cond=car(first);
             Object *if_seq=sequence_to_exp(cdr(first));
@@ -773,10 +788,10 @@ calltail:
     }else{
         Object *sym=car(exp);
 //        cout<<"     sym:"<<sym<<endl;
-        if(exp->type==CONS&&car(exp)->type==SYM&&sym==symQuote){
+        if(sym==symQuote){
             //        cout<<"============="<<cdr(exp)<<endl;
             return cdr(exp);
-        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symSetb){
+        }else if(sym==symSetb){
             Object *set_var=cadr(exp);
             Object *set_val=caddr(exp);
             //        cout<<"     set_var:"<<set_var<<" set_val:"<<set_val<<endl;
@@ -787,7 +802,7 @@ calltail:
             if(ret==nil)
                 ret=update(set_var, set_val, topEnv);
             return symStatus;
-        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symDefine){
+        }else if(sym==symDefine){
             Object *def_var;
             Object *def_val;
             
@@ -806,8 +821,10 @@ calltail:
                 def_var=caadr(exp);
                 Object *params=cdadr(exp);
                 Object *body=cddr(exp);
+                
+                
                 //def_val=cons(symLambda,cons(params,body));//make lambda
-                //cout<<"def_var:"<<def_var<<" params:"<<params<<" body:"<<body<<endl;
+//                cout<<"def_var:"<<def_var<<" params:"<<params<<" body:"<<body<<endl;
                 Object *proc;
                 //            cout<<" mkpro:"<<def_var->symname()<<" parm:"<<params<<" body:"<<body<<endl;
                 proc=mkproc(def_var->symname(), params,body,env);
@@ -816,7 +833,7 @@ calltail:
             }
             
             return symStatus;
-        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symIf){
+        }else if(sym==symIf){
             Object* if_test=cadr(exp);
             Object* if_consequent=caddr(exp);
             Object * if_alternate=cadddr(exp);
@@ -841,13 +858,13 @@ calltail:
             //        cout<<endl;
             
             goto calltail;
-        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symLambda){
+        }else if(sym==symLambda){
             Object *lambda_parms=cadr(exp);
             Object *lambda_body=cddr(exp);
             //cout<<"p:"<<lambda_parms<<endl;
             //cout<<"b:"<<lambda_body<<endl;
             return mkproc(lambda_parms, lambda_body, env);
-        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symBegin){
+        }else if(sym==symBegin){
             exp=cdr(exp);
             while(cdr(exp)!=nil){//is the last
                 exp->eval(car(exp),env);
@@ -855,7 +872,7 @@ calltail:
             }
             exp=car(exp);
             goto calltail;
-        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symCond){
+        }else if(sym==symCond){
             Object *the_clauses=cdr(exp);
             if(cdr(the_clauses)==nil){
                 return fee;
@@ -865,29 +882,78 @@ calltail:
 //                            cout<<"             clauses="<<exp<<endl;
             }
             goto calltail;
-        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symAtom){
+        }else if(sym==symAtom){
             //cout<<"============="<<cadr(exp)<<endl;
             exp=cadr(exp);
             exp=exp->eval(exp,env);
             return exp->atom();
-        }else if(exp->type==CONS&&car(exp)->type==SYM&&sym==symLet){
+        }else if(sym==symLet){
+//            cout<<"===exp:"<<exp<<endl;
+//            cout<<"     binds:"<<cadr(exp)<<endl;
+//            cout<<"     body:"<<cddr(exp)<<endl;
+            Object *let_parms=NULL;
+            Object *let_body=cddr(exp);
+            Object *let_args=NULL;
             
+            
+            Object* let_parms_t=cons(nil,nil);
+            Object* let_args_t=cons(nil,nil);
+            let_parms=let_parms_t;
+            let_args=let_args_t;
+            
+            for(Object *e=cadr(exp);e!=nil;e=cdr(e)){
+                Object* tmp=car(e);
+//                cout<<"     "<<car(tmp)<<" "<<cadr(tmp)<<endl;
+                
+                let_parms_t->setcar(car(tmp));
+                let_parms_t->setcdr(cons(nil,nil));
+                let_parms_t=let_parms_t->cdr();
+
+                let_args_t->setcar(cadr(tmp));
+                let_args_t->setcdr(cons(nil,nil));
+                let_args_t=let_args_t->cdr();
+                
+//                env=extend(car(tmp),cadr(tmp),env);
+
+            }
+//            cout<<"     let_params:"<<let_parms<<endl;
+//            cout<<"     let_args:"<<let_args<<endl;
+//            cout<<"     let_body:"<<let_body<<endl;
+
+//            env=extend(let_parms,let_args,env);
+
+            Object *lambda=mkproc(let_parms, let_body, env);
+//            cout<<"     lambda:"<<lambda<<endl;
+            exp=cons(lambda,let_args);
+//            exp=lambda;
+//            exp=cons(symBegin,lambda);
+//            exp=cons(lambda,nil);
+//            cout<<"     env:"<<env<<endl;
+//            cout<<"     exp:"<<exp<<endl;
+//            exp->dprint();
+            
+            goto calltail;
         }else if(exp->type==CONS){//proc to execute
-//                    cout<<"     app:"<<exp<<endl;
+//            cout<<"     =app:"<<exp<<endl;
             Object *op=car(exp);
             Object *ol=cdr(exp);
             
-//                    cout<<"         op:"<<op<<" type:"<<op->type<<" ol:"<<ol<<endl;
-            procedure=op->eval(op,env);
+//            cout<<"         op:"<<op<<" type:"<<op->type<<" ol:"<<ol<<endl;
+            if(op->type==PROC){
+                procedure=op;
+            }else{
+                procedure=op->eval(op,env);
+            }
+//            cout<<"         procedure:"<<procedure<<"  type:" <<procedure->type<<endl;
             if(procedure==nil)//can't find procedure
                 return symStatus;
             
             arguments=ol->evlis(ol, env);
-            //        cout<<"         =op:"<<op<<" type:"<<procedure->type<<" =ol:"<<arguments<<endl;
+//            cout<<"         =op:"<<op<<" type:"<<procedure->type<<" =ol:"<<arguments<<endl;
 //            cout<<"     app:"<<exp<<" ["<<op<<" "<<arguments<<"]"<<endl;
             
             if(procedure->type==PRIMOP){
-                //            cout<<"         "<<((FUNCTION)(procedure->data))(arguments)<<endl;
+//                            cout<<"         "<<((FUNCTION)(procedure->data))(arguments)<<endl;
                 Object *ret= ((FUNCTION)(procedure->data))(arguments);
 //                cout<<"call fun:"<<procedure<<" arg:"<<arguments<<"  ret:"<<ret<<endl;
 //                cout<<endl;
@@ -896,9 +962,10 @@ calltail:
                 Object *proc_args=car(procedure);//arg
                 Object *proc_body=cdr(procedure);//body
                 Object *proc_env=procedure->obj[2];
-                //            cout<<"     ##"<<procedure->symname()<<" proc_args:"<<proc_args<<" proc_body:"<<proc_body<<endl;
+//                            cout<<"     ##"<<" proc_args:"<<proc_args<<" arguments:" <<arguments<<" proc_body:"<<proc_body<<" proc_env:"<<proc_env<<endl;
                 env=extend(proc_args,arguments,proc_env);
-                exp=cons(symBegin,proc_body);//make begin this should avoid
+                exp=cons(symBegin,proc_body);//make begin this should avoid tail call stack overflow.
+//                cout<<"exp:"<<exp<<endl;
 //                exp=proc_body;
                 goto calltail;
             }else if(procedure->type==SYM){
@@ -910,7 +977,8 @@ calltail:
                 cout<<"erro procedure type"<<procedure->type<<" "<<procedure<<"."<<endl;
             }
         }else{
-            cout<<" eval erro "<<exp<<endl;
+            cout<<"eval erro "<<exp<<endl;
+//            exp->tprint();
         }
     }
     cout<<"eval unknow state"<<endl;
@@ -1100,7 +1168,7 @@ int Object::intval(Object *obj){
         d=(int)*(double*)obj->data;
         return d;
     }else{
-        cout<<"erro type intval."<<endl;
+        cout<<"erro obj "<<obj<<" type intval."<<endl;
         return -1;
     }
 }
@@ -1112,7 +1180,7 @@ double Object::floatval(Object *obj){
         d=(double)*(int*)obj->data;
         return d;
     }else{
-        cout<<"erro type floatval."<<endl;
+        cout<<"erro obj "<<obj<<"  type floatval."<<endl;
         return -1.0;
     }
 }
@@ -1205,8 +1273,8 @@ Object *Object::execute(Object *env){
 
 
 Object *Object::atom(){
-    cout<<"type:"<<type<<endl;
-    if(this->type==INT||this->type==SYM||this->type==STRING){
+//    cout<<"type:"<<type<<endl;
+    if(this->type==INT||this->type==SYM||this->type==STRING||this->type==FLOAT){
         return tee;
     }
     return nil;
@@ -1421,14 +1489,17 @@ ostream& operator<<(ostream &cout,Object* obj){
         //cout<<")";
         
     }else if(obj->type==PROC){
-        cout<<"#<PROC "<<obj->data<<">";
+        cout<<"#<procedure ";
+        if(obj->data!=NULL)
+            cout<<(char*)obj->data;
+        cout<<">";
 //        cout<<obj->symname();
         
     }else if(obj->type==PRIMOP){
-        cout<<"#<PRIMOP "<<obj->data<<">";
+        cout<<"#<primop "<<obj->data<<">";
     }
     else {
-        cout<<"UNDEFINE";
+        cout<<"undefine";
     }
     return cout;
 }
@@ -1493,7 +1564,7 @@ Object *Object::sum(Object *args){
             isfloat=true;
             fsum+=floatval(num);
         }else{
-            cout<<"unkown type to sum."<<endl;
+           cout<<num<<" unkown type to sum."<<endl;
         }
     }
 //    cout<<"       "<<fsum+isum<<endl;
@@ -1534,7 +1605,7 @@ Object *Object::sub(Object *args){
                 isfloat=true;
                 fsub-=floatval(num);
             }else{
-                cout<<"unkown type to sub."<<endl;
+                cout<<num<<" unkown type to sub."<<endl;
             }
         }
     }
@@ -1571,7 +1642,7 @@ Object *Object::mul(Object *args){
                 isfloat=true;
                 fmul*=floatval(num);
             }else{
-                cout<<"unkown type to mul."<<endl;
+                cout<<num<<" unkown type to mul."<<endl;
             }
         }
     }
@@ -1661,7 +1732,7 @@ Object *Object::prim_numeq(Object *args) {
                     icur=fcur;
                 }
             }else{
-                cout<<"other type not support"<<endl;
+                cout<<num<<" other type not support"<<endl;
                 return nil;
             }
         }
@@ -1698,7 +1769,7 @@ Object *Object::prim_numgt(Object *args) {
                     icur=fcur;
                 }
             }else{
-                cout<<"other type not support"<<endl;
+                cout<<num<<" other type not support"<<endl;
                 return nil;
             }
         }
@@ -1739,7 +1810,7 @@ Object *Object::prim_numlt(Object *args) {
                     icur=intval(num);
                 }
             }else{
-                cout<<"other type not support"<<endl;
+                cout<<num<<" other type not support"<<endl;
                 return nil;
             }
         }
@@ -1752,6 +1823,8 @@ Object *Object::prim_numlt(Object *args) {
 
 
 Object *Object::prim_cons(Object *args) {
+//    cout<<"prim_cons";args->dprint();
+
     return cons(car(args), car(cdr(args)));
 }
 Object *Object::prim_car(Object *args)  {

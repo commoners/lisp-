@@ -75,11 +75,9 @@
 
 ;;new-if
 (define (new-if predicate then-clause else-clause)
-    (cond (predicate then-clause)
-    (else (else-clause))))
+(cond (predicate then-clause)
+(else (else-clause))))
 
-(define (new-if predicate then-clause else-clause)
-    (if predicate then-clause else-clause ))
 
 (new-if (= 2 3) 0 5)
 ;5
@@ -88,11 +86,12 @@
 
 
 ;;;a bug please fix it.
-;(define (sqrt-iter guess x)
-;(new-if
-;(good-enough? guess x) guess
-;(sqrt-iter (improve guess x) x)))
+(define (sqrt-iter guess x)
+(new-if
+(good-enough? guess x) guess
+(sqrt-iter (improve guess x) x)))
 (sqrt 9)
+
 
 ;;factorial
 (define (factorial n)
@@ -120,7 +119,7 @@ a(gcd b (remainder a b))))
 ;;sum
 (define (sum term a next b)
 (if (> a b)
-    0(+ (term a)
+0(+ (term a)
 (sum term (next a) next b))))
 
 (define (inc n) (+ n 1))
@@ -129,6 +128,7 @@ a(gcd b (remainder a b))))
 
 (sum-cubes 1 10)
 ;3025
+
 
 
 
