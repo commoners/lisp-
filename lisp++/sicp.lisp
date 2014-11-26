@@ -57,8 +57,10 @@
 
 (define (improve guess x)
     (average guess (/ x guess)))
+
 (define (average x y)
     (/ (+ x y) 2))
+
 (define (good-enough? guess x)
     (< (abs (- (square guess) x)) 0.001))
 (define (sqrt x)
@@ -76,7 +78,7 @@
 ;;new-if
 (define (new-if predicate then-clause else-clause)
 (cond (predicate then-clause)
-(else (else-clause))))
+(else else-clause )))
 
 
 (new-if (= 2 3) 0 5)
@@ -87,9 +89,18 @@
 
 ;;;a bug please fix it.
 (define (sqrt-iter guess x)
-(new-if
+(if
 (good-enough? guess x) guess
 (sqrt-iter (improve guess x) x)))
+
+;(load "lib.lisp")
+;(trace 'average)
+;(trace 'improve)
+;(trace 'sqrt-iter)
+;(trace 'good-enough?)
+;(trace 'new-if)
+
+
 (sqrt 9)
 
 

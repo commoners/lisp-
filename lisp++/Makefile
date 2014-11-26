@@ -4,7 +4,7 @@
 # # Mail:rootntsd@gmail.com
 # ##########################################################################################
 CPP = g++
-CXXFLAGS = -g  -Wall   
+CXXFLAGS = -g     
 LDFLAGS =
 
 LIBS = 

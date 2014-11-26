@@ -99,10 +99,13 @@
 
 
 (define (ff i)
-(if (= i 1) i
-(ff (- i 1)) ) )
+    (if (= i 1) i
+        (ff (- i 1)) ) )
 
 (trace 'ff)
 
 (ff 10)
 
+(define (f x) (if (zero? x) 0 (add1 (f (sub1 x)))))
+(trace 'f)
+(f 100)

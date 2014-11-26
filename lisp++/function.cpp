@@ -42,14 +42,14 @@ void resist_functions(){
 }
 
 Object *load(Object *args){
-//    cout<<"   load args:";args->dprint();
-
+//        cout<<__FUNCTION__<<"  args:";args->dprint();
     Object *file=args->car();
     char *name=file->symname();
     
     ifstream istrm(name);
     if(istrm.fail()){
         cout<<"file "<<file->symname()<<" not exit."<<endl;
+        istrm.close();
         return Object::none;
     }
     Object::init();
@@ -61,7 +61,7 @@ Object *load(Object *args){
         //Memory::add_root(o);
         //Memory::add_root(env);
         //                cout<<"     @"<<o<<endl;
-        if(istrm.peek()==EOF&&o==Object::nil){
+        if(istrm.peek()==EOF&&o==Object::eob){
             break;
         }
         ret=o->eval(o,Object::nil);
@@ -179,7 +179,8 @@ Object *is_null(Object *args){
 
 
 Object *display(Object *args){
-//  cout<<"   display args:";args->dprint();
+//    cout<<__FUNCTION__<<"  args:";args->dprint();
+//    cout<<"car(args):"<<args->car()<<" type:"<<args->car()->gettype()<<endl;
     //if(args!=Object::nil)
     cout<<Object::car(args);
     return Object::symStatus;

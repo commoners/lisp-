@@ -44,6 +44,8 @@
 //Object *nil;
 Object *Object::nil=NULL;
 Object *Object::el=NULL;
+Object *Object::eob=NULL;
+
 
 Object *Object::symbols=NULL;
 Object *Object::topEnv=NULL;
@@ -86,18 +88,21 @@ Object *Object::callEnv=NULL;
 Memory *Object::memory=Memory::instance();
 
 
+
+
 Object::Object(){
     this->type=EL;
     this->data=NULL;
     this->obj=NULL;
     isalive=true;
     this->flag=NULL;
-    //cout<<__FUNCTION__<<" "<<(int *)this<<endl;
-    memory->add_obj(this);
+//    cout<<__FUNCTION__<<" "<<(int *)this<<endl;
+//    memory->add_obj(this);
 }
 Object* Object::mkobj(char* name){
     Object *thiz=memory->new_obj();
-    size_t len=strlen(name);len++;
+    size_t len=strlen(name);
+    len++;
     thiz->type=SYM;
     thiz->data=new char(len);
     memset(thiz->data,0,len);
@@ -121,19 +126,22 @@ Object *Object::mkobj(ObjType type,void* data){
     return thiz;
 }
 
-Object* Object::mkobj(ObjType type,int count,...){
+Object* Object::mknobj(ObjType type,int count,...){
     Object *thiz=memory->new_obj();
     va_list ap;
     int i;
-    va_start(ap, count);
+    va_start(ap,count);
     //    this->obj = (Object**) new Object[count]();
     thiz->obj=memory->new_objs(count);
     thiz->type = type;
     thiz->isalive=true;
     thiz->data=NULL;
     for(i = 0; i < count; i++){
-       thiz->obj[i] =(Object *)va_arg(ap,Object*);
+        Object *o=(Object *)va_arg(ap,Object*);
+       thiz->obj[i]=o ;
         //        cout<<"obj["<<i<<"]="<<*(obj[i])<<endl;
+//        cout<<"         obj["<<i<<"]="<<o<<" "<<thiz->obj[i]<<endl;
+
     }
     va_end(ap);
     thiz->flag=INIT;
@@ -145,11 +153,18 @@ Object* Object::mkobj(ObjType type,int count,...){
 
 Object *Object::cons(Object* obj1,Object *obj2){
     Object *o;
-    //cout<<"obj1:";obj1->dprint();
-//    cout<<"obj2:";obj2->dprint();
+//    cout<<" #obj1:";obj1->dprint();
+//    cout<<" #obj2:";obj2->dprint();
     //o=mkobj(CONS,2,obj1,obj2);
-    o=mkobj(CONS,2,obj1,obj2);
-//    cout<<" scons:";
+//    cout<<" obj1:"<<obj1<<endl;
+//    cout<<" obj2:"<<obj2<<endl;
+    o=mknobj(CONS,2,obj1,obj2);
+//    cout<<"     obj1:"<<obj1<<endl;
+    o->setcar(obj1);
+    o->setcdr(obj2);
+//    cout<<"     cons ret:"<<o<<endl;
+    
+ //    cout<<" scons:";
 //    cout<<" car:";o->car()->dprint();
 //    cout<<" cdr:";o->cdr()->dprint();
 //    o->dprint();
@@ -187,12 +202,12 @@ Object * Object::mkpriop(FUNCTION fun){
 }
 
 Object * Object::mkproc(Object *args,Object *body,Object* env){
-    Object *o=  mkobj(PROC,3,args,body,env);
+    Object *o=  mknobj(PROC,3,args,body,env);
     return o;
 }
 Object * Object::mkproc(char* name,Object *args,Object *body,Object* env){
     //cout<<"############"<<name<<endl;
-    Object *o=mkobj(PROC,3,args,body,env);
+    Object *o=mknobj(PROC,3,args,body,env);
     size_t len=strlen(name);
     len++;
     o->data=malloc(len);
@@ -273,6 +288,8 @@ void Object::init(){
     if(topEnv==NULL){
         nil=inter("nil");
         el=mkobj(EL,(void*)NULL);
+        eob=mkobj(EOB,(void*)NULL);
+
         
         symbols=cons(nil,nil);
         
@@ -781,7 +798,7 @@ calltail:
     
     
     
-    if(exp->type==INT||exp->type==STRING||exp->type==FLOAT||exp->type==BOOL){//to do string boolean and more data type
+    if(exp->type==INT||exp->type==STRING||exp->type==FLOAT||exp->type==BOOL||exp->type==EOB){//to do string boolean and more data type
 //        cout<<"ret:"<<exp<<endl;
         return exp;
     }else if(exp->type==SYM){
@@ -852,19 +869,25 @@ calltail:
             Object* if_consequent=caddr(exp);
             Object * if_alternate=cadddr(exp);
             Object *test=if_test->eval(if_test,env);
-            //        cout<<"     exp:"<<exp<<endl;
-            //        cout<<"         if_test:"<<if_test<<"="<<test<<endl;
-            //        cout<<"         if_consequent:"<<if_consequent<<endl;
-            //        cout<<"         if_alternate:"<<if_alternate<<endl;
+//                    cout<<"     exp:"<<exp<<endl;
+//                    cout<<"         if_test:"<<if_test<<"="<<test<<endl;
+//                    cout<<"         if_consequent:"<<if_consequent<<endl;
+//                    cout<<"         if_alternate:"<<if_alternate<<endl;
             //        cout<<"         cdddr(exp):"<<cdddr(exp)<<endl;
             if(test==tee||(test!=nil&&test!=fee)){
                 exp=if_consequent;//first exp
             }else{//else exp
+//                cout<<"ee==exp:";
+//                write(cout, cdddr(exp));
+
                 if(cdddr(exp)==nil){
-                    //cout<<"if_alternate is nil"<<endl;
+//                    cout<<"if_alternate is nil"<<endl;
                     exp=fee;
+                }else if(cdddr(exp)==el){//no else and is ()
+//                    return NULL;
+                    exp=eob;
                 }else{
-                    //cout<<"      =====if_alternate:"<<if_alternate<<endl;
+//                    cout<<"      =====if_alternate:"<<if_alternate<<endl;
                     exp=if_alternate;
                 }
             }
@@ -880,11 +903,15 @@ calltail:
             return mkproc(lambda_parms, lambda_body, env);
         }else if(sym==symBegin){
             exp=cdr(exp);
-            while(cdr(exp)!=el){//is the last
+            while(cdr(exp)!=el&&cdr(exp)!=nil){//is the last
+//                cout<<"     on exp:"<<exp<<endl;
+//                cout<<"cdr(exp):"<<cdr(exp)<<endl;
                 exp->eval(car(exp),env);
                 exp= cdr(exp);
             }
+//            cout<<"l=="<<cdr(exp)<<" e:"<<exp<<endl;
             exp=car(exp);
+//            cout<<"last===="<<exp<<endl;
             goto calltail;
         }else if(sym==symCond){
             Object *the_clauses=cdr(exp);
@@ -959,8 +986,10 @@ calltail:
                 procedure=op->eval(op,env);
             }
 //            cout<<"         procedure:"<<procedure<<"  type:" <<procedure->type<<endl;
-            if(procedure==nil)//can't find procedure
+            if(procedure==nil){//can't find procedure
+                cout<<"can't find procedure '"<<op<<"'."<<endl;
                 return symStatus;
+            }
             
             arguments=ol->evlis(ol, env);
 //            cout<<"         =op:"<<op<<" type:"<<procedure->type<<" =ol:"<<arguments<<endl;
@@ -995,13 +1024,16 @@ calltail:
 //            exp->tprint();
         }
     }
-    cout<<"eval unknow state."<<endl;
+//    cout<<"eval unknow state."<<endl;
     return exp;
     
 }
 Object * Object::evlis(Object *exps,Object *env){
-    if(exps == nil) return nil;
-    //    cout<<"exps:"<<exps<<" env:"<<env<<endl;
+//    cout<<"exps:"<<exps<<" env:"<<env<<endl;
+//    write(cout, exps);
+//    cout<<endl;
+
+    if(exps == nil||exps->car()==nil) return nil;
 //       cout<<"     evlis3 exps:";exps->dprint(); cout<<"    env:"<<env<<endl;
     
     //    Object *ret=cons(eval2(car(exps), env),evlis2(cdr(exps), env));
@@ -1010,18 +1042,21 @@ Object * Object::evlis(Object *exps,Object *env){
     Object*r=t;
     Object*l=nil;
     for(;exps->type==CONS;exps=cdr(exps)){
-//               cout<<" ****exps:"<<exps<<endl;
+//      cout<<" ****exps:"<<car(exps)<<endl;
         Object *te=exps->eval(car(exps),env);
 //        cout<<" ****vals:"<<te<<endl;
         t->setcar(te);
         t->setcdr(cons(nil,nil));
-        //            cout<<" ********t:"<<t<<endl;
+//                    cout<<" ********t:"<<t<<endl;
         l=t;
         t=t->cdr();
         
     }
+//    cout<<" l:"<<l<<endl;
     l->setcdr(nil);
-//    cout<<"     ret:"<<r<<endl;
+//    cout<<" l:"<<l<<endl;
+//    cout<<"     ret:"<<r<<" "<<endl;
+//    r->write(cout, r);
     return r;
 }
 Object * Object::apply(Object *proc,Object *args,Object *env){
@@ -1073,7 +1108,8 @@ Object * Object::values(Object *exp,Object* env){
 
 Object * Object::lookup(Object *id,Object* env){
 //    cout<<" id:"<<id<<" env:"<<env<<endl;
-    if(env==NULL||env==nil){
+//    cout<<__FILE__<<" id:"<<id<<endl;
+    if(env==NULL||env==nil||env==el){
         return nil;
     }else if(env->type==CONS){
 //        cout<<"cmp id:"<<id<<" "<<caar(env)<<" :::"<< (id==caar(env))<<" ="<<(id->symname()==caar(env)->symname())<<" --:"<<
@@ -1235,6 +1271,10 @@ Object *Object::setcdr(Object *obj1,Object *obj2){
 Object *Object::setcar(Object *obj1,Object *obj2){
     if(obj1!=NULL&&obj1->obj!=NULL&&!isnil(obj1)){
         obj1->obj[0]=obj2;
+//        cout<<"===================obj1:"<<*obj1<<" obj2:"<<obj2<<endl;
+
+//        if(obj2->symname()!=NULL)
+//        cout<<__FILE__<<" "<<__LINE__<<obj2->symname()<<endl;
         return obj2;
     }
     return nil;
@@ -1352,6 +1392,8 @@ Object *Object::setcdr(Object *obj1){
     return setcdr(this,obj1);
 }
 Object *Object::setcar(Object *obj1){
+//    cout<<"==============@@@@@obj1:"<<*this<<" obj2:"<<obj1<<endl;
+
     return setcar(this,obj1);
 }
 
@@ -1430,7 +1472,7 @@ ostream& Object::dstream(ostream &os,Object *o){
     
     if(o==NULL){
         os<<"NIL";
-    }else if(o->type==SYM){
+    }else if(o->type==SYM||o->type==BOOL){
         //cout<<"SYM:";
         os<<(char*)o->data;
     }else if(o->type==INT){
@@ -1457,6 +1499,7 @@ ostream& Object::dstream(ostream &os,Object *o){
         dstream(os,o->cdr());
         os<<")";
     }
+//    write(os,o);
     return os;
 }
 istream& operator>>(istream &cin,Object &obj){
@@ -1467,6 +1510,11 @@ ostream& Object::write(ostream &os,Object *obj){
 //    obj->print();
 //    obj->dprint();
     switch (obj->type) {
+        case EOB:{
+            string str((const char*)obj->data);
+            os<<str;
+            break;
+        }
         case EL:
             os<<"()";
             break;
@@ -1490,9 +1538,11 @@ ostream& Object::write(ostream &os,Object *obj){
 //            }
             break;
         }
-        case BOOL:
-            
-            break;
+        case BOOL:{
+            string str((const char*)obj->data);
+            os<<str;
+        
+            break;}
         case CONS:
             os<<"(";
             write_pair(os,obj);
@@ -1532,7 +1582,9 @@ ostream& Object::write_pair(ostream &os,Object *obj){
 
 ostream& operator<<(ostream &cout,Object* obj){
 //    return   Object::write(cout,obj);
+//    cout<<"write:";
 //    Object::write(std::cout,obj);
+//    cout<<endl;
 
 //    cout<<" ";
 //    std::cout<<*obj<<endl;
@@ -1543,7 +1595,14 @@ ostream& operator<<(ostream &cout,Object* obj){
     }
     else if(obj==obj->none){
         return cout;
-    }else if(obj->type==EL){
+    }else if(obj->type==EOB){
+//        cout<<"eob"<<endl;
+        if(obj->symname()!=NULL){
+//            cout<<"eob:"<<obj->symname();
+        }
+        return cout;
+    }
+    else if(obj->type==EL){
         cout<<"()";
         return cout;
     }else if(obj->type==SYM||obj->type==BOOL){
@@ -1556,21 +1615,27 @@ ostream& operator<<(ostream &cout,Object* obj){
     }else if(obj->type==STRING){
         string str((const char*)obj->data);
                 cout<<str;
+//        printf("===========%s\n",(char*)obj->data);
         //cout<<str.substr(1,str.length()-2);
     }else if(obj->type==CONS){
         cout<<"(";
         while(true) {
             cout<<(obj->car());
-            if((obj->cdr()==Object::el)){
+            if(obj->cdr()==Object::el){
                 cout<<")";
                 break;
+            }else if(obj->cdr()==Object::nil){
+                
             }else{
                 cout<<" ";
             }
             obj=(obj->cdr());
              if(obj->type==EL){
 //                        cout<<"()";
-            }else if(obj->type!=CONS){
+             }else if(obj==Object::nil){
+                 cout<<")";
+                 break;
+             }else if(obj->type!=CONS){
                 cout<<". ";
                 cout<<obj;
                 cout<<")";
@@ -1590,7 +1655,7 @@ ostream& operator<<(ostream &cout,Object* obj){
         cout<<"#<primop "<<obj->data<<">";
     }
     else {
-        cout<<"undefine";
+        cout<<"undefine type:"<<obj->type<<".";
     }
     return cout;
 }
@@ -1628,7 +1693,7 @@ ostream& operator<<(ostream &cout,Object&obj){
     }else if(obj.type==PRIMOP){
         cout<<"PRIMOP";
     }else {
-        cout<<"UNDEFINE";
+        cout<<"UNDEFINE TYPE:"<<obj.type<<".";
     }
     //cout<<endl;
     return cout;

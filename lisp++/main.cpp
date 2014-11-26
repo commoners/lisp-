@@ -16,6 +16,7 @@
 #define FAILE cout<<"[FAILED] "<<__FUNCTION__<<" "<<__FILE__<<" "<<__LINE__<<endl;
 #define PASS cout<<"[PASS] "<<__FUNCTION__<<" "<<__FILE__<<" "<<__LINE__<<endl;
 
+#define LISP_VERSION "0.2.1"
 
 int test0(){
     Object::init();
@@ -129,7 +130,7 @@ int test2(){
     Object *o[5]={NULL};
     char *test[]={
         "(define count 0)",
-        "(define jj (lambda () (if (< count 10) (begin (set! count (+ count 1)) (jj)) count)))",
+        "(define jj (lambda () (if (< count 10000) (begin (set! count (+ count 1)) (jj)) count)))",
         "(jj)",
         "(define count 0)",
         "(jj)",
@@ -138,9 +139,9 @@ int test2(){
         o[i]=p.parse(test[i]);
         
         cout<<"["<<i<<"]"<<"<<<<<<===============#################################  "<<test[i]<<endl;
-        Object *ret=o[i]->eval_tail_call(o[i],env);
+        Object *ret=o[i]->eval(o[i],env);
         
-        cout<<">>>>>>>===============################################# result=";ret->dprint();
+        cout<<">>>>>>>===============################################# result="<<ret;
         cout<<endl;
     }
     return 0;
@@ -297,7 +298,7 @@ int main(int argc, const char * argv[])
         if(argh){
             cout<<""
             
-            <<"Lisp++"<<endl
+            <<"Lisp++ v"<<LISP_VERSION<<endl
             <<"    Created by evil on 9/7/14."<<endl
             <<"    Copyright (c) 2014 evilbinary.org. All rights reserved."<<endl
             <<"    rootntsd@gmail.com"<<endl;
@@ -322,7 +323,7 @@ int main(int argc, const char * argv[])
                 //Memory::add_root(o);
                 //Memory::add_root(env);
 //                cout<<"     @"<<o<<endl;
-                if(istrm.peek()==EOF&&o==Object::nil){
+                if(istrm.peek()==EOF&&o==Object::eob){
                     break;
                 }
                 if(arginfo){
@@ -355,6 +356,7 @@ int main(int argc, const char * argv[])
             cout<<">";
             char ch;
             string line;
+            int match=0;
             while (true)
             {
                 try
@@ -362,10 +364,20 @@ int main(int argc, const char * argv[])
                     char ch;
                     //std::getline(std::cin, line);
                     while( (ch=cin.get())!=EOF&&ch!='\n'){
+//                        cout<<"getchar:"<<ch<<endl;
+                        if(ch=='('){
+                            match++;
+                        }else if(ch==')'){
+                            match--;
+                        }
                         line+=ch;
                     }
-                    if(line!=""){
-                        Object *o=p.parse(line.c_str());
+                    cin.clear();
+                     if(line!="" &&match==0){
+                    
+                        Object *o=p.parse(line);
+//                    cout<<"begin:"<<line<<endl;
+//                    cin.clear();
                         //cout<<"input=";o->dprint();
 //                        Object *ret=o->eval(o,env);
                         Object *ret=Object::nil;
@@ -383,7 +395,13 @@ int main(int argc, const char * argv[])
                         }
                         if(ret!=Object::none){
                             //cout<<ret<<endl;
-                            std::cout << ret<<endl << ">";
+                            std::cout << ret;
+                                cout<<endl;
+                            cout<< ">";
+                        }else if(ret==Object::eob){
+                            std::cout << ret;
+                            cout<<endl;
+                            cout<< ">";
                         }else{
                             std::cout << ">";
                         }

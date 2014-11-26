@@ -40,7 +40,7 @@ typedef enum ObjectType{
     FLOAT,
     INPUT_PORT,
     OUTPUT_PORT,
-    EOBJ,//empty obj
+    EOB,//empty obj
     BOOL,
 }ObjType;
 
@@ -80,12 +80,14 @@ public:
     
     
     Object();
+
     ~Object();
     
     
     //global object
     static Object *nil;
     static Object *el;
+    static Object *eob;
     
     static Object *symbols;
     static Object *topEnv;
@@ -138,7 +140,7 @@ public:
     static Object *mksym(char *name);
     static char*  symname(Object *obj);
  
-    static Object * mkobj(ObjType type,int count,...);
+    static Object * mknobj(ObjType type,int count,...);
     static Object * mkobj(char*name);
     static Object * mkobj(ObjType type,void* data);
 
@@ -226,9 +228,10 @@ public:
 private:
     //data
     void *data;
-    Object **obj;
     bool isalive;
     ObjType type;
+    Object **obj;
+
 };
 
 

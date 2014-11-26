@@ -35,16 +35,17 @@ Object* Parser::parse(string inputs){
 
 
 Object* Parser::parse(istream & in){
-    Object *o=Object::nil;
+    Object *o=Object::el;
     int c;
     short sign = 1;
     int num = 0;
+//    cout<<"#=====eof:"<<in.eof()<<" bad:"<<in.bad()<<" failbit:"<<in.fail()<<" good:"<<in.good()<<endl;
+
     eatws(in);
     c=in.get();
     if(c==EOF)
-        return o;
-    
-//    cout<<"char:"<<(char)c<<endl;
+        return Object::eob;
+//    cout<<(char)c<<endl;
     
     if(c=='('){
        // cout<<"(:"<<endl;
@@ -142,7 +143,9 @@ Object* Parser::parse(istream & in){
         }
         Object *obj;
         buf[i] = '\0';
+//        cout<<"buf:"<<buf<<endl;
         obj=Object::mkstring(buf);
+//        cout<<"obj:"<<obj<<endl;
         return obj;
     }
     else if(is_initial(c) ||((c=='+'||c=='-')&&is_delimiter(in.peek()) ) ){
@@ -157,12 +160,13 @@ Object* Parser::parse(istream & in){
             }
             c=in.get();
 //            cout<<"ccc:"<<(char)c<<endl;
-
+//            cout<<buf<<endl;
         }
         if(is_delimiter(c)){
             buf[i]='\0';
             in.unget();
             obj=Object::inter(buf);
+//            cout<<"obj:"<<obj<<endl;
             //obj->dprint();
             return obj;
         }else{
@@ -182,7 +186,7 @@ Object *Parser::pair(istream &in){
     Object *car=NULL;
     Object *cdr=NULL;
     int c;
-    
+//    cout<<"#eof:"<<in.eof()<<" bad:"<<in.bad()<<" failbit:"<<in.fail()<<" good:"<<in.good()<<endl;
     
     eatws(in);
     
@@ -190,14 +194,15 @@ Object *Parser::pair(istream &in){
         return Object::nil;
     
     c=in.get();
+    
     if(c==')'){
         return Object::el;
     }
     in.unget();
     //cout<<"car===begin"<<endl;;
     car=parse(in);
-    //cout<<"car===";
-    //car->dprint();
+//    cout<<"car===";
+//    car->dprint();
     eatws(in);
     c=in.get();
     if (c == '.'&&!isdigit(in.peek())) {
@@ -219,19 +224,19 @@ Object *Parser::pair(istream &in){
     }else {
 //        cout<<"pair else "<<endl;
         
-        if(in.eof())
-            return Object::nil;
+//        if(in.eof())
+//            return Object::nil;
         
         in.unget();
         
         cdr = pair(in);
-//        cout<<"=car:";
+//        cout<<" =car:"<<car<<endl;;
 //        car->dprint();
         
-//        cout<<"=cdr:";
+//        cout<<" =cdr:"<<cdr<<endl;
 //        cdr->dprint();
         Object *obj=Object::cons(car, cdr);
-        //cout<<" cons:";
+//        cout<<"     =cons:"<<obj<<endl;
         //obj->dprint();
         //cout<<endl;
         return obj;
@@ -246,8 +251,10 @@ void Parser::eatws(istream &in){
             //cout<<"isspace"<<endl;
             continue;
         }else if (c == ';') {//;注释忽略
-            //cout<<"conmmon"<<endl;
-            while (((c = in.get())) != EOF &&(c !='\n'));
+//            cout<<"conmmon:"<<(char)c<<endl;
+            while (((c = in.get())) != EOF &&(c !='\n')){
+//                cout<<(char)c<<endl;
+            }
             continue;
         }
         in.unget();

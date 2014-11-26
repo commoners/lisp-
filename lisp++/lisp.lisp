@@ -24,8 +24,8 @@
 
 (eq? 'nil '())
 (eq? '() '())
-
-
+(display "atom\n")
+(atom? 'a)
 
 
 
@@ -98,5 +98,9 @@
       (fn args)
       (wrong "Not a function" fn) ) ) 
 
+(define (add a ) (+ a a a a a a a a a a a))
+
+;(trace 'extend)
 (trace 'evaluate)
 (evaluate '(+ 1 2) env.init)
+;(add 1000)

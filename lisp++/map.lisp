@@ -27,3 +27,12 @@
 (define (add a b c d e)
     (+ a b c d e))
 ;(add 1 2 3 4 5)
+(define (map proc items)
+  (if (null? items)
+      nil
+      (cons (proc (car items))
+            (map proc (cdr items)))))
+(load "lib.lisp")
+(map abs '( -10 2.5 -11.6 17))
+
+

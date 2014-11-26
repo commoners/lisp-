@@ -25,23 +25,23 @@ Object *Memory::new_obj(){
 //    auto_ptr<Object> ap(o);
 //    Object *ret=&*ap.get();
 //    return ret;
-    //add_obj(o);
+//    add_obj(o);
     
     //gc();
     return o;
 }
 Object ** Memory::new_objs(int count){
-    Object** o=new Object*[count]();
-    add_objs(o, count);
+    Object** o=new Object* [count];
+//    add_objs(o, count);
     return o;
 }
 Object * Memory::add_obj(Object *o){
     if(o==NULL) return NULL;
     if(o->flag==INIT){
         //printf("ptr:%p:\n",o);
-        objs.insert(std::pair<Object*, int >(o,INIT) );
+//        objs.insert(std::pair<Object*, int >(o,INIT) );
     }else{
-        cout<<"error flag"<<o->flag<<endl;
+//        cout<<"error flag"<<o->flag<<endl;
     }
     return o;
 }
